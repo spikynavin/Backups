@@ -1,0 +1,115 @@
+From ba2dbc10ac41732ac510e1dfc5c70f84a0b2f046 Mon Sep 17 00:00:00 2001
+From: Diego Dorta <diego.dorta@nxp.com>
+Date: Mon, 17 Oct 2016 14:44:18 -0200
+Subject: [PATCH] Minimal Kernel Features for i.MX6Q
+
+Remove unnecessary services and features.
+
+Signed-off-by: Diego Dorta <diego.dorta@nxp.com>
+---
+ arch/arm/configs/minimal_imx6q_defconfig | 93 ++++++++++++++++++++++++++++++++
+ 1 file changed, 93 insertions(+)
+ create mode 100644 arch/arm/configs/minimal_imx6q_defconfig
+
+diff --git a/arch/arm/configs/minimal_imx6q_defconfig b/arch/arm/configs/minimal_imx6q_defconfig
+new file mode 100644
+index 0000000..5949b14
+--- /dev/null
++++ b/arch/arm/configs/minimal_imx6q_defconfig
+@@ -0,0 +1,93 @@
++CONFIG_KERNEL_LZO=y
++CONFIG_SYSVIPC=y
++CONFIG_NO_HZ=y
++CONFIG_HIGH_RES_TIMERS=y
++CONFIG_IKCONFIG=y
++CONFIG_LOG_BUF_SHIFT=18
++CONFIG_CGROUPS=y
++CONFIG_RELAY=y
++CONFIG_BLK_DEV_INITRD=y
++CONFIG_EXPERT=y
++CONFIG_KALLSYMS_ALL=y
++CONFIG_PERF_EVENTS=y
++# CONFIG_COMPAT_BRK is not set
++# CONFIG_BLK_DEV_BSG is not set
++# CONFIG_IOSCHED_DEADLINE is not set
++# CONFIG_IOSCHED_CFQ is not set
++CONFIG_ARCH_MULTI_V6=y
++CONFIG_ARCH_MXC=y
++# CONFIG_MACH_MX31ADS is not set
++# CONFIG_MACH_BUG is not set
++CONFIG_SOC_IMX6Q=y
++# CONFIG_ARM_THUMB is not set
++# CONFIG_KUSER_HELPERS is not set
++# CONFIG_CACHE_L2X0 is not set
++# CONFIG_DEBUG_RODATA is not set
++CONFIG_PREEMPT_VOLUNTARY=y
++# CONFIG_ARM_PATCH_IDIV is not set
++CONFIG_AEABI=y
++# CONFIG_CPU_SW_DOMAIN_PAN is not set
++# CONFIG_COMPACTION is not set
++# CONFIG_ATAGS is not set
++CONFIG_CMDLINE="noinitrd console=ttymxc0,115200"
++CONFIG_VFP=y
++CONFIG_NEON=y
++CONFIG_BINFMT_MISC=y
++# CONFIG_COREDUMP is not set
++# CONFIG_SUSPEND is not set
++# CONFIG_UEVENT_HELPER is not set
++# CONFIG_STANDALONE is not set
++# CONFIG_PREVENT_FIRMWARE_BUILD is not set
++# CONFIG_FW_LOADER is not set
++# CONFIG_ALLOW_DEV_COREDUMP is not set
++# CONFIG_BLK_DEV is not set
++# CONFIG_INPUT_MOUSEDEV is not set
++# CONFIG_INPUT_KEYBOARD is not set
++# CONFIG_INPUT_MOUSE is not set
++# CONFIG_SERIO is not set
++# CONFIG_VT is not set
++# CONFIG_UNIX98_PTYS is not set
++# CONFIG_LEGACY_PTYS is not set
++# CONFIG_DEVMEM is not set
++# CONFIG_DEVKMEM is not set
++CONFIG_SERIAL_IMX=y
++CONFIG_SERIAL_IMX_CONSOLE=y
++CONFIG_SERIAL_FSL_LPUART=y
++CONFIG_SERIAL_FSL_LPUART_CONSOLE=y
++# CONFIG_HW_RANDOM is not set
++# CONFIG_HWMON is not set
++# CONFIG_HID is not set
++# CONFIG_USB_SUPPORT is not set
++CONFIG_MMC=y
++# CONFIG_PWRSEQ_EMMC is not set
++# CONFIG_PWRSEQ_SIMPLE is not set
++# CONFIG_MMC_BLOCK_BOUNCE is not set
++CONFIG_MMC_SDHCI=y
++CONFIG_MMC_SDHCI_PLTFM=y
++CONFIG_MMC_SDHCI_ESDHC_IMX=y
++# CONFIG_IOMMU_SUPPORT is not set
++# CONFIG_RESET_CONTROLLER is not set
++# CONFIG_ARM_PMU is not set
++CONFIG_EXT4_FS=y
++# CONFIG_FILE_LOCKING is not set
++# CONFIG_DNOTIFY is not set
++# CONFIG_INOTIFY_USER is not set
++# CONFIG_PROC_FS is not set
++# CONFIG_SYSFS is not set
++# CONFIG_MISC_FILESYSTEMS is not set
++CONFIG_PRINTK_TIME=y
++# CONFIG_ENABLE_WARN_DEPRECATED is not set
++# CONFIG_ENABLE_MUST_CHECK is not set
++# CONFIG_SECTION_MISMATCH_WARN_ONLY is not set
++# CONFIG_DEBUG_BUGVERBOSE is not set
++# CONFIG_FTRACE is not set
++# CONFIG_ARM_UNWIND is not set
++# CONFIG_CRYPTO_ECHAINIV is not set
++CONFIG_CRYPTO_CRCT10DIF=y
++# CONFIG_CRYPTO_HW is not set
++# CONFIG_XZ_DEC_X86 is not set
++# CONFIG_XZ_DEC_POWERPC is not set
++# CONFIG_XZ_DEC_IA64 is not set
++# CONFIG_XZ_DEC_ARM is not set
++# CONFIG_XZ_DEC_ARMTHUMB is not set
++# CONFIG_XZ_DEC_SPARC is not set
+-- 
+2.7.4
+
