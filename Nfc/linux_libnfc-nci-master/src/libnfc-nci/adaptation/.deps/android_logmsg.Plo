@@ -1,0 +1,92 @@
+src/libnfc-nci/adaptation/android_logmsg.lo: \
+ src/libnfc-nci/adaptation/android_logmsg.cpp \
+ /opt/poky/1.4.4/sysroots/x86_64-pokysdk-linux/usr/lib/armv5te-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/4.7.2/include/stdarg.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/stdio.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/features.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/stdc-predef.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/predefs.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/sys/cdefs.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/wordsize.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs-soft.h \
+ /opt/poky/1.4.4/sysroots/x86_64-pokysdk-linux/usr/lib/armv5te-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/4.7.2/include/stddef.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/types.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/typesizes.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/libio.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/_G_config.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/wchar.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/stdio_lim.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/sys_errlist.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/stdio.h \
+ src/libnfc-nci/include/OverrideLog.h src/libnfc-nci/include/bt_types.h \
+ src/libnfc-nci/gki/ulinux/data_types.h \
+ src/libnfc-nci/include/android_logmsg.h \
+ src/libnfc-nci/include/nfc_target.h src/libnfc-nci/include/gki_target.h \
+ src/libnfc-nci/include/dyn_mem.h src/libnfc-nci/include/bt_trace.h \
+ src/libnfc-nci/include/buildcfg.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/string.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/xlocale.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/memory.h \
+ src/halimpl/pn54x/log/phNxpLog.h
+
+/opt/poky/1.4.4/sysroots/x86_64-pokysdk-linux/usr/lib/armv5te-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/4.7.2/include/stdarg.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/stdio.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/features.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/stdc-predef.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/predefs.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/sys/cdefs.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/wordsize.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs-soft.h:
+
+/opt/poky/1.4.4/sysroots/x86_64-pokysdk-linux/usr/lib/armv5te-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/4.7.2/include/stddef.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/types.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/typesizes.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/libio.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/_G_config.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/wchar.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/stdio_lim.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/sys_errlist.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/stdio.h:
+
+src/libnfc-nci/include/OverrideLog.h:
+
+src/libnfc-nci/include/bt_types.h:
+
+src/libnfc-nci/gki/ulinux/data_types.h:
+
+src/libnfc-nci/include/android_logmsg.h:
+
+src/libnfc-nci/include/nfc_target.h:
+
+src/libnfc-nci/include/gki_target.h:
+
+src/libnfc-nci/include/dyn_mem.h:
+
+src/libnfc-nci/include/bt_trace.h:
+
+src/libnfc-nci/include/buildcfg.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/string.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/xlocale.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/memory.h:
+
+src/halimpl/pn54x/log/phNxpLog.h:

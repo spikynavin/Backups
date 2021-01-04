@@ -1,0 +1,96 @@
+src/libnfc-nci/gki/common/gki_time.lo: \
+ src/libnfc-nci/gki/common/gki_time.c src/libnfc-nci/gki/ulinux/gki_int.h \
+ src/libnfc-nci/gki/common/gki_common.h src/libnfc-nci/gki/common/gki.h \
+ src/libnfc-nci/include/bt_target.h \
+ src/libnfc-nci/gki/ulinux/data_types.h \
+ src/libnfc-nci/include/gki_target.h src/libnfc-nci/include/bt_types.h \
+ src/libnfc-nci/include/dyn_mem.h src/libnfc-nci/include/bt_trace.h \
+ src/libnfc-nci/include/bt_types.h src/libnfc-nci/include/dyn_mem.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/pthread.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/features.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/stdc-predef.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/predefs.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/sys/cdefs.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/wordsize.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs-soft.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/endian.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/endian.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/byteswap.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/types.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/typesizes.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/byteswap-16.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/sched.h \
+ /opt/poky/1.4.4/sysroots/x86_64-pokysdk-linux/usr/lib/armv5te-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/4.7.2/include/stddef.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/time.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/sched.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/time.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/xlocale.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/pthreadtypes.h \
+ /opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/setjmp.h
+
+src/libnfc-nci/gki/ulinux/gki_int.h:
+
+src/libnfc-nci/gki/common/gki_common.h:
+
+src/libnfc-nci/gki/common/gki.h:
+
+src/libnfc-nci/include/bt_target.h:
+
+src/libnfc-nci/gki/ulinux/data_types.h:
+
+src/libnfc-nci/include/gki_target.h:
+
+src/libnfc-nci/include/bt_types.h:
+
+src/libnfc-nci/include/dyn_mem.h:
+
+src/libnfc-nci/include/bt_trace.h:
+
+src/libnfc-nci/include/bt_types.h:
+
+src/libnfc-nci/include/dyn_mem.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/pthread.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/features.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/stdc-predef.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/predefs.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/sys/cdefs.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/wordsize.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/gnu/stubs-soft.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/endian.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/endian.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/byteswap.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/types.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/typesizes.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/byteswap-16.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/sched.h:
+
+/opt/poky/1.4.4/sysroots/x86_64-pokysdk-linux/usr/lib/armv5te-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/4.7.2/include/stddef.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/time.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/sched.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/time.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/xlocale.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/pthreadtypes.h:
+
+/opt/poky/1.4.4/sysroots/armv5te-poky-linux-gnueabi/usr/include/bits/setjmp.h:
