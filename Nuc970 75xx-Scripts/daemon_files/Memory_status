@@ -1,0 +1,58 @@
+#!/bin/bash
+
+rm /usr/share/status/mem_state
+
+Total=`free | grep "Mem" | awk '{print $2}'`
+
+Used=`free | grep "Mem" | awk '{print $3}'`
+
+Total=$(( Total/1024 ))
+
+Used=$(( Used/1024 ))
+
+echo -e "RAM:\n$Total MB\n$Used MB" > /usr/share/status/mem_state
+
+Total=`df -h | grep "ubi0:system" | awk '{print $2}'`
+
+Used=`df -h | grep "ubi0:system" | awk '{print $3}'`
+
+Percent=`df -h | grep "ubi0:system" | awk '{print $5}'`
+
+echo -e "NAND:\n$Total\n$Used\n$Percent" >> /usr/share/status/mem_state
+
+
+if [ -e "/dev/mmcblk0p1" ]
+then
+
+SD=`df -h | grep /media/sdcard | awk '{print $6}'`
+
+if [ -e "$SD" ]
+then
+echo ""
+else
+
+mount /dev/mmcblk0p1 /media/sdcard
+fi
+
+Total=`df -h | grep /dev/mmcblk0p1 | awk '{print $2}'`
+
+Used=`df -h | grep /dev/mmcblk0p1 | awk '{print $3}'`
+
+Percent=`df -h | grep /dev/mmcblk0p1 | awk '{print $5}'`
+
+echo -e "SDcard:\n$Total\n$Used\n$Percent" >> /usr/share/status/mem_state
+
+fi
+
+if [ -e "/dev/sda1" ]                                                        
+then
+
+Total=`df -h | grep /dev/sda1 | awk '{print $2}'`                  
+                                                                    
+Used=`df -h | grep /dev/sda1 | awk '{print $3}'`         
+
+Percent=`df -h | grep /dev/sda1 | awk '{print $5}'`
+
+echo -e "Thumbdrive:\n$Total\n$Used\n$Percent" >> /usr/share/status/mem_state  
+
+fi                       

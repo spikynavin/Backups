@@ -1,0 +1,64 @@
+backlight=$1
+file="/dev/backlightctl0"
+case "$backlight" in
+        "0")                                                       
+		if [ -c "$file" ]
+		then 
+			echo 0 > /dev/backlightctl0
+		else
+			echo 100000 > /sys/class/pwm/pwmchip0/pwm0/period
+                	echo 5000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+		fi
+			echo 0 > /usr/share/status/present_backlight.txt
+        ;;
+	"1") 
+		if [ -c "$file" ]
+                then
+                        echo 1 > /dev/backlightctl0
+                else
+			echo 100000 > /sys/class/pwm/pwmchip0/pwm0/period
+                        echo 10000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+                fi
+			echo 1 > /usr/share/status/present_backlight.txt
+        ;;
+        "2")
+		if [ -c "$file" ]
+                then
+                        echo 2 > /dev/backlightctl0
+                else
+			echo 100000 > /sys/class/pwm/pwmchip0/pwm0/period
+                        echo 25000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+                fi
+			echo 2 > /usr/share/status/present_backlight.txt
+        ;;
+        "3")
+		if [ -c "$file" ]
+                then
+                        echo 3 > /dev/backlightctl0
+                else
+			echo 100000 > /sys/class/pwm/pwmchip0/pwm0/period
+                        echo 50000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+                fi
+			echo 3 > /usr/share/status/present_backlight.txt
+        ;;
+        "4")
+		if [ -c "$file" ]
+                then
+                        echo 4 > /dev/backlightctl0
+                else
+			echo 100000 > /sys/class/pwm/pwmchip0/pwm0/period
+                        echo 75000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+                fi 
+			echo 4 > /usr/share/status/present_backlight.txt
+        ;;
+	"5")
+		if [ -c "$file" ]
+                then
+                        echo 5 > /dev/backlightctl0
+                else
+			echo 100000 > /sys/class/pwm/pwmchip0/pwm0/period
+                        echo 95000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+                fi
+			echo 5 > /usr/share/status/present_backlight.txt
+	;;
+esac

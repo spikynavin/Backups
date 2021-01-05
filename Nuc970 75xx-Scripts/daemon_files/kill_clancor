@@ -1,0 +1,4 @@
+killall ClanCor_HHC
+killall taskd
+killall gpiod
+killall gpsd

@@ -1,0 +1,4 @@
+Flasher file for sd_flasher
+sdk.sh file for automount and umount
+nand_erase file for tmp manualy partition ceration in nand
+Before creating partition we need to flash the env28inch file in nandwrite tool

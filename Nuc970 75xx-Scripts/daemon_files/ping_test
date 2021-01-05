@@ -1,0 +1,59 @@
+#!/bin/bash
+
+
+if [ "$2" == "E" ]
+then
+
+ping -c 2 $1
+
+if [ "$?" == "0" ]
+then
+
+echo "E" > /opt/daemon_files/ping_status
+#sh /usr/share/scripts/Buzzer 4
+
+else
+
+echo "e" > /opt/daemon_files/ping_status
+#sh /usr/share/scripts/Buzzer 2
+
+fi
+
+elif [ "$2" == "W" ]
+then
+
+ping -c 2 $1
+
+if [ "$?" == "0" ]
+then
+
+echo "W" > /opt/daemon_files/ping_status
+#sh /usr/share/scripts/Buzzer 4
+
+else
+
+echo "w" > /opt/daemon_files/ping_status
+#sh /usr/share/scripts/Buzzer 2
+
+fi
+
+elif [ "$2" == "G" ]
+then
+
+ping -c 2 $1
+
+if [ "$?" == "0" ]
+then
+
+echo "G" > /opt/daemon_files/ping_status
+#sh /usr/share/scripts/Buzzer 4
+
+else
+
+echo "g" > /opt/daemon_files/ping_status
+#sh /usr/share/scripts/Buzzer 2
+
+fi
+
+
+fi

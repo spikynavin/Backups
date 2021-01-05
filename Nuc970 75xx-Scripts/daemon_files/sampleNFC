@@ -1,0 +1,2 @@
+nfc-list uses libnfc 
+NFC device: pn532_uart:/dev/ttyS8 opened

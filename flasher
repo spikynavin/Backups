@@ -1,0 +1,68 @@
+ubiattach /dev/ubi_ctrl -m 3 -O 2048
+mount -t ubifs ubi0:user /media/nand
+if [ $? -eq 0 ]; then	
+	cd /media/nand
+	tar -cvf /usr/fs/nand.tar *
+	sync
+	cd 
+	umount /media/nand
+	ubidetach /dev/ubi_ctrl -m 3
+	sleep 1
+	sync
+elif [ $? -ne 0 ]; then
+	ubiformat /dev/mtd3
+	ubiattach /dev/ubi_ctrl -m 3 -O 2048
+	ubimkvol /dev/ubi0 -N user -m
+	mount -t ubifs /dev/ubi0:user /media/nand
+	umount /media/nand
+	ubidetach /dev/ubi_ctrl -m 3
+	sync
+else
+	Error creating partition..!!
+fi
+
+echo 195 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio195/direction
+
+GPIO=/sys/class/gpio/gpio195/value
+
+flash_eraseall -j /dev/mtd1
+nandwrite -p /dev/mtd1 /usr/kernel/uImage
+#Kernel Flash completed buzzer 
+echo "1" > $GPIO
+usleep 10000
+echo "0" > $GPIO
+usleep 1500
+echo "1" > $GPIO
+usleep 10000
+echo "0" > $GPIO
+#Kernel Flash completed buzzer
+sudo sync
+sleep 1
+flash_eraseall -j /dev/mtd2
+nandwrite -p /dev/mtd2 /usr/fs/ubi_match.img
+ubiattach /dev/ubi_ctrl -m 2 -O 2048
+#Kernel Flash completed buzzer
+echo "1" > $GPIO
+usleep 10000
+echo "0" > $GPIO
+usleep 1500
+echo "1" > $GPIO
+usleep 10000
+echo "0" > $GPIO
+ubidetach /dev/ubi_ctrl -m 2
+sync
+ubiattach /dev/ubi_ctrl -m 3 -O 2048
+mount -t ubifs ubi0:user /media/nand
+rm /media/nand/* -rf
+sync
+tar -xvf /usr/fs/nand.tar -C /media/nand
+sync
+umount /media/nand
+ubidetach /dev/ubi_ctrl -m 3
+#Kernel Flash completed buzzer
+
+echo 195 > /sys/class/gpio/unexport 
+sudo sync
+sleep 1
+exec /usr/share/scripts/rtc-poweroff &

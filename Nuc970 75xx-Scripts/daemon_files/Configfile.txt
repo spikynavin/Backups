@@ -1,0 +1,28 @@
+Model:HHC-7500
+Processor:32 bit ARM v5 CPU
+Processor Speed: 300 MHz
+RAM: 64 MB DDR2
+Flash(NAND): 256 MB
+Operating System: Linux-3.10.101
+Framework: QT v4.8.4 GUI Application 
+Camera: 2 Mega Pixel
+Audio : Speakers and Headset Jack
+Battery: Lion Battery 7.4V 2800mAh
+Touch Panel:4 Wired Resistive Touch 
+Display: 3.5" Color LCD, HVGA 320x480
+Keypad:QWERTY
+No of Keys: 30 Alphanumeric
+Printer: 2 Inch Thermal Printer
+Printer Language: All Languages
+GPS: Integerated MediaTek Chipset MT3339/MT3333
+Magnetic Card Reader: Bi-Directional
+3 Track Swipe Reader ISO 7811,7813
+USB: USB 2.0 Host/Client 
+GPRS: QUAD Band, GSM/GPRS/EDGE
+Single SIM Slot
+Single SAM Slot
+Dual Smart Slot
+Fingerprint : Morpho CBM
+SD Card Slot Supports upto 32 GB
+Operating Temprature: -20C to 50C
+

@@ -1,0 +1,6 @@
+#!/bin/bash
+echo $1....... > /usr/share/status/bbb-eeprom.dump
+echo $2........ >> /usr/share/status/bbb-eeprom.dump
+cat /usr/share/status/bbb-eeprom.dump > /sys/bus/i2c/devices/0-0050/eeprom
+#eepromtool -w -s 0 $1
+#eepromtool -w -s 1 $2

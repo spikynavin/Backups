@@ -1,0 +1,12 @@
+#!/bin/bash
+touch new
+cat /sys/bus/i2c/devices/0-0050/eeprom | hexdump -C | grep 00001000 | awk '{print $18}' > new
+cut -c2-10 new > /usr/share/status/EEPROM-data
+cat /sys/bus/i2c/devices/0-0050/eeprom | hexdump -C | grep 00001010 | awk '{print $18}' > new
+cut -c3-10 new >> /usr/share/status/EEPROM-data
+cut -c3-10 new > /usr/share/status/EEPROM-serial
+rm new
+
+#eepromtool -r -s 0 | tee /usr/share/status/EEPROM-data
+#eepromtool -r -s 1 | tee -a /usr/share/status/EEPROM-data
+#eepromtool -r -s 1 | tee /usr/share/status/EEPROM-serial

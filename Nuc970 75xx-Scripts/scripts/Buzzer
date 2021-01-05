@@ -1,0 +1,19 @@
+#!/bin/bash
+
+GPIO=/sys/class/gpio/gpio195/value
+
+case $1 in
+
+	1) echo "1" > $GPIO;usleep 200000;echo "0" > $GPIO;;
+
+	2) echo "1" > $GPIO;usleep 10000;echo "0" > $GPIO;usleep 1500
+           echo "1" > $GPIO;usleep 10000;echo "0" > $GPIO;;	
+	
+	3) echo "1" > $GPIO;usleep 50000;echo "0" > $GPIO;; 
+
+	4) echo "1" > $GPIO;usleep 80000;echo "0" > $GPIO;usleep 50000
+	   echo "1" > $GPIO;usleep 80000;echo "0" > $GPIO;;  
+
+	 *) echo "INVALID NUMBER!" ;;  
+
+esac

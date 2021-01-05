@@ -1,0 +1,83 @@
+#!/bin/bash
+
+
+if [ "$1" == "3g" ]
+then
+
+sh /opt/daemon_files/gprs_tower_3g > /opt/daemon_files/tower_file
+
+else
+
+sh /opt/daemon_files/gprs_tower > /opt/daemon_files/tower_file
+
+fi
+
+tower_status=`cat /opt/daemon_files/tower_file | grep +CSQ | awk '{print $2}'`
+
+tower=`echo ${tower_status:0:2}`
+
+
+if [ "$1" == "3g" ]
+then
+
+if [ $tower -lt 10 ]
+then
+
+echo "6" > /opt/daemon_files/tower_value
+
+elif [ $tower -lt 15 ]
+then                
+           
+echo "7" > /opt/daemon_files/tower_value
+                       
+elif [ $tower -lt 20 ]
+then                
+           
+echo "7" > /opt/daemon_files/tower_value
+                       
+elif [ $tower -lt 25 ] 
+then                
+           
+echo "8" > /opt/daemon_files/tower_value
+                       
+elif [ $tower -lt 30 ] 
+then                
+           
+echo "9" > /opt/daemon_files/tower_value
+                       
+fi
+
+
+
+else
+
+if [ $tower -lt 10 ]                                                          
+then                                                                          
+                                                                              
+echo "1" > /opt/daemon_files/tower_value                                      
+                                                                              
+elif [ $tower -lt 15 ]                                                        
+then                                                                          
+                                                                              
+echo "2" > /opt/daemon_files/tower_value                                      
+                                                                              
+elif [ $tower -lt 20 ]                                                        
+then                                                                          
+                                                                              
+echo "3" > /opt/daemon_files/tower_value                                      
+                                                                              
+elif [ $tower -lt 25 ]                  
+then                                    
+                                        
+echo "4" > /opt/daemon_files/tower_value
+                                        
+elif [ $tower -lt 30 ]                  
+then   
+
+echo "5" > /opt/daemon_files/tower_value                                      
+                                        
+fi 
+
+
+fi
+

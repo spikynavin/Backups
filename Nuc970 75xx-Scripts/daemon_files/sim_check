@@ -1,0 +1,48 @@
+#!/bin/bash
+
+if [ "$1" == "3g" ]
+then
+
+sh /opt/daemon_files/gprs_sim_3g > /opt/daemon_files/sim_file
+
+else
+
+sh /opt/daemon_files/gprs_sim > /opt/daemon_files/sim_file
+
+fi
+
+
+
+sim_status=`cat /opt/daemon_files/sim_file | grep +CPIN | awk '{print $2}'`
+
+sim_status=`echo ${sim_status:0:5}`
+
+
+echo $sim_status
+
+if [ "$sim_status" = "READY" ]
+then
+
+
+if [ "$1" == "3g" ]
+then
+
+apn=`cat /opt/daemon_files/apn`
+
+echo "$apn" > /dev/ttyACM3
+
+else
+
+apn=`cat /opt/daemon_files/apn`
+
+echo "$apn" > /dev/chn/2
+
+fi
+
+echo "1" > /opt/daemon_files/sim_value
+
+else
+
+echo "0" > /opt/daemon_files/sim_value
+
+fi

@@ -1,0 +1,24 @@
+case "$1" in                                                                    
+start)  
+#	export DISPLAY=:0.0;
+#	/usr/bin/xinput disable 6; 
+	sh /usr/share/scripts/backlight 1
+	echo 3 > /proc/sys/vm/drop_caches; 
+        var=`ps | grep '[s]tartApplication\|[u]dev\|[r]mgmtd\|[k]eyd\|[t]askd\|[g]psd\|[n]etd\|[s]tandbyd' | awk '{print $1}'`;
+	kill -STOP $var;
+	;;                                                                      
+                                                                                
+stop)
+	file=$(cat /usr/share/status/present_backlight)
+        sh /usr/share/scripts/backlight $file
+        var=`ps | grep '[s]tartApplication\|[u]dev\|[r]mgmtd\|[k]eyd\|[t]askd\|[g]psd\|[n]etd\|[s]tandbyd' | awk '{print $1}'`;
+	kill -CONT $var;
+	echo 3 > /proc/sys/vm/drop_caches;
+#	export DISPLAY=:0.0;
+#	/usr/bin/xinput enable 6;   
+	;;
+*)
+echo "Usage: /opt/daemon_files/pkill {start|stop}"                       
+        exit 1                                                                  
+        ;;                                                                      
+esac
