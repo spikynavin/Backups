@@ -1,0 +1,46 @@
+uneeded
+
+10-imx.rules      bootlogd          localextra.rules  sysfs.sh
+alignment.sh      bootmisc.sh       mountnfs.sh       syslog
+alsa-state        connman           neard             syslog.busybox
+apmd              dbus-1            networking        udev
+automount.rules   dmesg.sh          ofono             udev-cache
+autonet.rules     dropbear          psplash.sh        udev-working
+avahi-daemon      hwclock.sh        rpcbind           wifiapd
+banner.sh         local.rules       stop-bootlogd
+
+need to remove /etc/udev/rules.d/*
+
+vi /etc/init.d/udev
+
+#!/bin/bash
+
+case "$1" in
+  start)
+    #echo "Starting udev"
+    /lib/udev/udevd -d
+    udevadm trigger --action=add
+    udevadm settle
+    ;;
+  stop)
+    echo "Stopping udevd"
+    start-stop-daemon --stop --name udevd --quiet
+    ;;
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  status)
+    pid=`pidof -x udevd`
+    if [ -n "$pid" ]; then
+        echo "udevd (pid $pid) is running ..."
+    else
+        echo "udevd is stopped"
+    fi
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|status|restart}"
+    exit 1
+esac
+exit 0

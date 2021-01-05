@@ -1,0 +1,11 @@
+ clock-frequency = <52800000>; /*26400000*/
+                                hactive = <800>;
+                                vactive = <480>;
+                                hback-porch = <8>; /*8*/
+                                hfront-porch = <16>; /*315 */
+                                vback-porch = <5>;
+                                vfront-porch = <43>;
+                                hsync-len = <8>;
+                                vsync-len = <2>;
+                                de-active    = <1>;
+                                pixelclk-active = <0>;

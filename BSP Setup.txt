@@ -1,0 +1,1209 @@
+board bringup & setup
+
+1.Uart pad SD3_DAT7 for UART TX, SD3_DAT6 for UART RX
+2.Comment the usdhc3 SD3_DAT7,SD3_DAT6 pin because they are conflicting the uart output
+3.Setup the SPINOR pad,EMMC pads.
+4.Config the bootargus by bootm loadaddress ftd address initramfs address
+5.Load the flashing kernel and uboot with dtb file using MFGTOOLS
+6.Load these address in the MFGTOOLS for loadaddress,initramfs,ftd 12000000,12C00000,1800000 (Need to check after booting linux)
+
+7.NOR FLASH SETUP:
+
+HOST Packages for linux pc
+
+For curl
+export LD_LIBRARY_PATH=/usr/local/lib/
+
+VNC Server Setup for i.Mx6 
+x11vnc -ncache 10 -geometry 800x460 -snapfb -noxdamage -nowf -noxkb
+
+Speedtest:
+
+curl -o /dev/null http://speedtest-blr1.digitalocean.com/100mb.test
+eg: calculation
+KB/sec * 0.001 = 6.794 MB/sec.
+
+YOCTO Package build binary & libary build directory
+
+build/tmp/work/cortexa9t2hf-vfp-neon-poky-linux-gnueabi/
+
+These are the basic things we do in yocto local.conf
+====================================================
+MACHINE imx6qsabreauto
+
+BB_NUMBER_THREADS = "4"
+PARALLEL_MAKE = "-j 4"
+
+ACCEPT_FSL_EULA = "1"
+
+#SDKMACHINE ?= "i686"
+INHERIT += "extrausers"
+
+Yocto variables for build toolchain
+
+SDKMACHINE ?= "i686" or x86_64
+
+SERIAL_CONSOLES = "115200;ttyS0 115200;ttyS1"
+
+PREFERRED_VERSION_gcc = "4.9"
+PREFERRED_VERSION_python = "2.7.3"
+PREFERRED_VERSION_linux-yocto = "3.14%"
+
+INHIBIT_PACKAGE_DEBUG_SPLIT = "1" 
+
+bitbake -c populate_sdk core-image-x11
+
+KERNEL_DEVICETREE = "imx6q-sabreauto.dtb"
+UBOOT_CONFIG ??= "mx6qsabreauto_spinor_config"
+KERNEL_IMAGETYPE_linux-imx = "uImage"
+
+======================================================
+Note: This will be added to the distro image file like core-image-x11.bb
+
+inherit extrausers
+EXTRA_USERS_PARAMS = "useradd -P yourpass yourusername;"
+or
+Here is what you have to do in your recipe.
+
+inherit extrausers
+EXTRA_USERS_PARAMS = "usermod -P p@ssw0rd root;"
+where p@ssw0rd is the password you want root user to have.
+
+This link may help you.
+
+As "debug-tweaks"'s goal is to set root's password empty, you must remove it from your EXTRA_IMAGE_FEATURES.
+======================================================
+bitbake meta-toolchain-qt5 -c fetchall
+meta-toolchain-qt5
+u-boot-imx
+u-boot-imx-mfgtool 
+linux-imx
+=======================================================
+
+UART Pading:
+MX6QDL_PAD_SD3_DAT7__UART1_TX_DATA      0x1b0b1
+MX6QDL_PAD_SD3_DAT6__UART1_RX_DATA      0x1b0b1
+
+Fresh kernel compiling config changes
+#input devices enable selected devices only
+#hardware monitor devices disabled
+
+Codeaurora
+source url https://source.codeaurora.org/external/imx/linux-imx
+branch imx_3.14.28_1.0.0_ga_caf
+
+Boundary devices
+https://github.com/boundarydevices/linux-imx6.git
+branch imx_3.14.28_1.0.0_ga
+
+Cleansource branches
+imx_3.14.28_1.0.0_ga_caf  for linux kernel
+nxp/imx_v2014.04_3.14.28_1.0.0_ga for uboot
+
+1) board/freescale/mx6sabresd/mx6sabresd.c
+
+static iomux_v3_cfg_t const ecspi1_pads[] = {
+/*SPI NORFLASH GPIOPINS CONFIGS*/
+      MX6_PAD_EIM_D16__ECSPI1_SCLK | MUX_PAD_CTRL(SPI_PAD_CTRL),
+      MX6_PAD_EIM_D17__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
+      MX6_PAD_EIM_D18__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
+      MX6_PAD_EIM_D19__GPIO3_IO19  | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static void setup_spi(void)
+{
+        imx_iomux_v3_setup_multiple_pads(ecspi1_pads, ARRAY_SIZE(ecspi1_pads));
+        gpio_direction_output(IMX_GPIO_NR(3, 19), 0);
+}
+
+#ifdef CONFIG_MXC_SPI
+int board_spi_cs_gpio(unsigned bus, unsigned cs)
+{
+        // Need to change occuring to chipselect cs == 1 or cs == 0
+        return (bus == 0 && cs == 0) ? (IMX_GPIO_NR(3, 19)) : -1;
+}
+#endif
+
+2) drivers/mtd/spi/sf_params.c
+
+#ifdef CONFIG_SPI_FLASH_ISSI            /* ISSI */
+        {"IS25LP032D",     0x9d6016, 0x0,       64 * 1024,    64, 0},
+        {"IS25LP032",      0x9d6016, 0x0,       64 * 1024,    64, 0},
+        {"IS25LP064",      0x9d6017, 0x0,       64 * 1024,   128, 0},
+        {"IS25LP128",      0x9d6018, 0x0,       64 * 1024,   256, 0},
+#endif
+
+3) include/configs/mx6sabre_common.h
+
+#define CONFIG_SYS_BOOT_SPINOR
+#ifdef CONFIG_CMD_SF
+#define CONFIG_MXC_SPI
+#define CONFIG_SF_DEFAULT_BUS           0
+#define CONFIG_SF_DEFAULT_CS            0
+#define CONFIG_SF_DEFAULT_SPEED         20000000
+#define CONFIG_SF_DEFAULT_MODE          SPI_MODE_0
+#define CONFIG_SPI_FLASH_ISSI
+#endif
+
+//device 0 offset 0x400, size 0x3ffc00 Size of the NOR Flash
+
+8.Change the Bootconfig occurding to the IMX linux user guide document in part no: 4.3 Preparing an SD/MMC card to boot.
+
+9.EMMC are present in the below define USDHC Controller.
+### Select mmc dev 2 (USDHC4) on the i.MX 6 SABRESD board:
+U-Boot > mmc dev 2 0
+
+#define MAX_SPI_BYTES  (64 * 4) in the file arch/arm/include/asm/arch/imx-regs.h
+#define SPI_MAX_NUM    4
+
+10.These line are added in the mx6sabre_common.h file.
+#ifdefined(CONFIG_FSL_ENV_IN_SF)
+#define CONFIG_ENV_IS_IN_SPI_FLASH 1
+#define CONFIG_ENV_SPI_CS  0
+#define CONFIG_ENV_OFFSET       (768 * 1024)
+#endif
+
+If you bootup the fresh board in other version of uboot kindly change the Extra config file to 
+1. <Board cgf file>,MX6DL for the MFGTool
+
+2. For Kernel NOR Flash define in spi-nor.c file
+
+ /* ISSI -- Nor flash support parameters */
+        { "IS25LP032D",  INFO(0x9d6016, 0, 64 * 1024, 64,  0) },
+        { "IS25LP032",   INFO(0x9d6016, 0, 64 * 1024, 64,  0) },
+        { "IS25LP064",   INFO(0x9d6017, 0, 64 * 1024, 128, 0) },
+        { "IS25LP128",   INFO(0x9d6018, 0, 64 * 1024, 256, 0) },
+		
+Use this if your using uboot 2014 & below
+#ifdef CONFIG_SPI_FLASH_ISSI            /* ISSI */
+        {"IS25LP032D",     0x9d6016, 0x0,       64 * 1024,    64,       0,                        0},
+        {"IS25LP032",      0x9d6016, 0x0,       64 * 1024,    64,       0,                        0},
+        {"IS25LP064",      0x9d6017, 0x0,       64 * 1024,   128,       0,                        0},
+        {"IS25LP128",      0x9d6018, 0x0,       64 * 1024,   256,       0,                        0},
+#endif
+
+Board configuration use in boards.cfg file in uboot
+Active  arm         armv7          mx6         freescale       mx6sabresd          mx6dlsabresd_mfg                         mx6sabresd:IMX_CONFIG=board/freescale/mx6sabresd/mx6dlsabresd.cfg,MX6DL,DEFAULT_FDT_FILE="imx6dl-sabresd.dtb",SYS_USE_SPINOR                                                  Naveen <naveensivasamy@pricol.co.in>
+
+3. Uboot & Kernel console setup:
+In uboot #define CONFIG_CONSOLE_DEV              "ttymxc0"
+In Kernel CONFIG_CMDLINE="rdinit=/linuxrc console=ttymxc0,115200" define in .config file
+
+4.Ram init in the c file is
+ gd->ram_size = imx_ddr_size();
+ 
+5. Kernel device tree file to add modules.
+
+Note: Kernel upgrade steps:
+error: waiting for root device /dev/mmcblk2p2...
+need to change the file imx6qdl.dtsi
+aliases {
+                gpio0 = &gpio1;
+                gpio1 = &gpio2;
+                gpio2 = &gpio3;
+                gpio3 = &gpio4;
+                gpio4 = &gpio5;
+                gpio5 = &gpio6;
+                gpio6 = &gpio7;
+                i2c0 = &i2c1;
+                i2c1 = &i2c2;
+                i2c2 = &i2c3;
+                ipu0 = &ipu1;
+                mmc0 = &usdhc1;
+                mmc1 = &usdhc2;
+                /*mmc2 = &usdhc3;
+                mmc3 = &usdhc4;*/
+                mmc2 = &usdhc4;
+                mmc3 = &usdhc3;
+                serial0 = &uart1;
+                serial1 = &uart2;
+                serial2 = &uart3;
+                serial3 = &uart4;
+                serial4 = &uart5;
+                spi0 = &ecspi1;
+                spi1 = &ecspi2;
+                spi2 = &ecspi3;
+                spi3 = &ecspi4;
+                usbphy0 = &usbphy1;
+                usbphy1 = &usbphy2;
+        };
+
+
+Note : Need to enable and change like below in kernel tree to flash.
+
+vi arch/arm/boot/dts/imx6qdl.dtsi
+ecspi1: ecspi@02008000 {
+                                        #address-cells = <1>;
+                                        #size-cells = <0>;
+                                        compatible = "fsl,imx6q-ecspi", "fsl,imx51-ecspi";
+                                        reg = <0x02008000 0x4000>;
+                                        interrupts = <0 31 IRQ_TYPE_LEVEL_HIGH>;
+                                        clocks = <&clks IMX6QDL_CLK_ECSPI1>,
+                                                 <&clks IMX6QDL_CLK_ECSPI1>;
+                                        clock-names = "ipg", "per";
+                                        status = "okay";
+                                };
+
+add spi nor flash:
+vi arch/arm/boot/dts/imx6qdl-sabresd.dtsi
+&ecspi1 {
+        fsl,spi-num-chipselects = <1>;
+        cs-gpios = <&gpio3 19 0>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_ecspi1>;
+        status = "okay";
+
+        flash: m25p80@0 {
+                #address-cells = <1>;
+                #size-cells = <1>;
+                compatible = "st,m25p32";
+                spi-max-frequency = <20000000>;
+                reg = <0>;
+        };
+};
+
+pinctrl_ecspi1:
+ pinctrl_ecspi1: ecspi1grp {
+                        fsl,pins = <
+                                MX6QDL_PAD_EIM_D17__ECSPI1_MISO 0x100b1
+                                MX6QDL_PAD_EIM_D18__ECSPI1_MOSI 0x100b1
+                                MX6QDL_PAD_EIM_D16__ECSPI1_SCLK 0x100b1
+                        >;
+                };
+				
+Note: Need to check the PAD_EIM_D16 pin whether is configured any where.
+
+add emmc:
+
+ pinctrl_usdhc4: usdhc4grp {
+                        fsl,pins = <
+                                MX6QDL_PAD_SD4_CMD__SD4_CMD             0x17059
+                                MX6QDL_PAD_SD4_CLK__SD4_CLK             0x10059
+                                MX6QDL_PAD_SD4_DAT0__SD4_DATA0          0x17059
+                                MX6QDL_PAD_SD4_DAT1__SD4_DATA1          0x17059
+                                MX6QDL_PAD_SD4_DAT2__SD4_DATA2          0x17059
+                                MX6QDL_PAD_SD4_DAT3__SD4_DATA3          0x17059
+                                MX6QDL_PAD_SD4_DAT4__SD4_DATA4          0x17059
+                                MX6QDL_PAD_SD4_DAT5__SD4_DATA5          0x17059
+                                MX6QDL_PAD_SD4_DAT6__SD4_DATA6          0x17059
+                                MX6QDL_PAD_SD4_DAT7__SD4_DATA7          0x17059
+                        >;
+                };
+&usdhc4 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_usdhc4>;
+        bus-width = <8>;
+        non-removable;
+        no-1-8-v;
+        keep-power-in-suspend;
+        status = "okay";
+};
+
+6.Kernel chipselect for the nor flash is cs = 1
+
+7.SPI NOR Switch config:
+Swicths 1 2 3 4 5 6 7 8
+        0 0 0 0 1 1 0 0
+
+8.Serial download mode:
+Switch 1 2
+	   1 0  for normal boot
+	   0 1  for serial boot
+	   
+int mmc_send_cmd(struct mmc
+*mmc, struct mmc_cmd *cmd, struct mmc_data *data)
+
+{
+
+printf("CMD_SEND:%d\n",cmd->cmdidx);
+
+printf("\t\tARG\t\t\t0x%08X\n", cmd->cmdarg);
+
+
+}
+
+9. eth address 56:69:80:a6:d3:e2
+
+10. cfg file setup:
+file name mx6dlsabresd.cfg
+/*
+ * Boot Device : one of spi, sd, sata
+ * the board has no nand and eimnor
+ * spinor: flash_offset: 0x0400
+ * sata:   flash_offset: 0x0400
+ * sd/mmc: flash_offset: 0x0400
+ */
+#ifdef CONFIG_SYS_BOOT_SPINOR
+BOOT_FROM      nor
+#endif
+/* the same flash_offset as sd */
+BOOT_FROM      sd
+
+#ifdef CONFIG_USE_PLUGIN
+/*PLUGIN    plugin-binary-file    IRAM_FREE_START_ADDR*/
+PLUGIN  board/freescale/mx6sabresd/plugin.bin 0x00907000
+#else
+
+#ifdef CONFIG_SECURE_BOOT
+SECURE_BOOT
+#endif
+
+11. Enable yocto kernel menuconfig in putty install tmux package in the host system.
+
+12. To change the Header of uboot 
+scripts/setlocalversion
+
+13.
+make iw_rainbowg15_mfg_defconfig for mfg tool flashing
+make iw_rainbowg15_defconfig for mainline kernel
+make menuconfig
+make uImage LOADADDR=0x10800000
+
+14. Logo:
+
+tools/bmp_logo --gen-info /STORAGE/naveen/iwave/iwg15-release/Uboot/uboot-iwg15/tools/logos/freescale.bmp > /STORAGE/naveen/iwave/iwg15-release/Uboot/uboot-iwg15/include/bmp_logo.h
+tools/bmp_logo --gen-data /STORAGE/naveen/iwave/iwg15-release/Uboot/uboot-iwg15/tools/logos/freescale.bmp > /STORAGE/naveen/iwave/iwg15-release/Uboot/uboot-iwg15/include/bmp_logo_data.h
+
+15. Display parameters:
+
+Note : Need to set primary
+mxcfb1: fb@0 {
+                compatible = "fsl,mxc_sdc_fb";
+                disp_dev = "ldb";
+        /*              interface_pix_fmt = "RGB666";*/
+                interface_pix_fmt = "RGB24";
+        /*      default_bpp = <16>;*/
+                default_bpp = <32>;
+                int_clk = <0>;
+                late_init = <0>;
+        /*      status = "disabled";*/
+                status = "okay";
+        };
+
+&ldb {
+        status = "okay";
+        lvds-channel@0 {
+        /*      fsl,data-mapping = "spwg";*/
+                fsl,data-mapping = "jeida";
+                fsl,data-width = <24>;
+                primary;
+                status = "okay";
+                display-timings {
+                        native-mode = <&timing0>;
+                        timing0: hsd100pxn1 {
+                                clock-frequency = <65000000>;
+                                hactive = <1024>;
+                                vactive = <768>;
+                                hback-porch = <100>;
+                                hfront-porch = <40>;
+                                vback-porch = <30>;
+                                vfront-porch = <3>;
+                                hsync-len = <10>;
+                                vsync-len = <2>;
+                        };
+                };
+        };
+		
+or Dual mode setup below
+
+&ldb {
+        dual-mode = <1>;
+        status = "okay";
+
+        lvds-channel@0 {
+                fsl,data-mapping = "jeida";
+                fsl,data-width = <24>;
+                primary;
+                status = "okay";
+
+                display-timings {
+                        native-mode = <&timing0>;
+                        timing0: hsd100pxn1 {
+                                clock-frequency = <65000000>;
+                                hactive = <1024>;
+                                vactive = <768>;
+                                hback-porch = <100>;
+                                hfront-porch = <40>;
+                                vback-porch = <30>;
+                                vfront-porch = <3>;
+                                hsync-len = <10>;
+                                vsync-len = <2>;
+                        };
+                };
+        };
+		
+		lvds-channel@1 {
+                fsl,data-mapping = "jeida";
+                fsl,data-width = <24>;
+                status = "okay";
+
+                display-timings {
+                        native-mode = <&timing1>;
+                        timing1: hsd100pxn1 {
+                                clock-frequency = <65000000>;
+                                hactive = <1024>;
+                                vactive = <768>;
+                                hback-porch = <100>;
+                                hfront-porch = <40>;
+                                vback-porch = <30>;
+                                vfront-porch = <3>;
+                                hsync-len = <10>;
+                                vsync-len = <2>;
+                        };
+                };
+        };
+};
+
+
+16. Bootup logo will change by using gimp 224 raw formate.
+ex. kernel/driver/video/logo/linux.ppm use acsii formate file.
+https://easylinuxji.blogspot.com/2019/03/replace-default-splash-screen-in-yocto.html
+https://stackoverflow.com/questions/37143627/yocto-splash-screen-not-appearing
+
+17. Touch screen calibration
+
+
+
+export if required:
+
+export TSLIB_TSDEVICE=/dev/input/event0
+export TSLIB_CONFFILE=/usr/etc/ts.conf
+export TSLIB_PLUGINDIR=/usr/lib/ts
+export TSLIB_CALIBFILE=/etc/pointercal
+export TSLIB_FBDEVICE=/dev/fb0
+export TSLIB_CONSOLEDEVICE=/dev/tty
+
+https://community.nxp.com/thread/480463
+
+18. Change Uboot version 
+
+$ vi Makefile
+ include/config/uboot.release
+ include/generated/version_autogenerated.h
+ include/generated/timestamp_autogenerated.h
+ include/generated/timestamp_autogenerated.h
+
+19. Watchdog softreboot setup:
+
+&gpc {
+        /* use ldo-bypass, u-boot will check it and configure */
+        fsl,ldo-bypass = <0>;
+        fsl,wdog-reset = <1>;
+};
+
+&wdog1 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_wdog>;
+        fsl,ext-reset-output;
+        status = "okay";
+};
+
+
+&wdog2 {
+        status = "disabled";
+};
+
+pinctrl_wdog: wdoggrp {
+                        fsl,pins = <
+                                MX6QDL_PAD_GPIO_9__WDOG1_B 0x80000000
+                        >;
+                };
+
+
+20. EETI Touch setup for lvds 1
+
+egalax_ts@04 {
+                compatible = "eeti,egalax_ts";
+                reg = <0x04>;
+                interrupt-parent = <&gpio3>;
+                interrupts = <31 2>;
+                wakeup-gpios = <&gpio3 31 0>;
+        };
+		
+EETI Touch setup for lvds 2
+egalax_ts@04 {
+                compatible = "eeti,egalax_ts";
+                reg = <0x04>;
+                interrupt-parent = <&gpio3>;
+                interrupts = <30 2>;
+                wakeup-gpios = <&gpio3 30 0>;
+        };
+
+		
+21. Psplash setup:
+
+$./make-image-header.sh <logo_pic.png ,jpg> POKY
+$ git clone https://git.yoctoproject.org/git/psplash
+$ cd psplash
+$ autoreconf --install
+$ source ~/iwave-cc
+$ ./configure --host=arm
+$ make
+
+or make change with the help of psplash script and replace the header file in rootfs build
+
+vi ../sources/poky/meta-yocto/recipes-core/psplash/files/psplash-poky-img.h 
+
+Note: if locale error or waring use below commands
+Missing locales are generated with locale-gen:
+$ locale-gen en_US.UTF-8
+
+Alternatively a locale file can be created manually with localedef:
+$ localedef -i en_US -f UTF-8 en_US.UTF-8
+$ export LANGUAGE=en_US.UTF-8
+$ export LANG=en_US.UTF-8
+$ export LC_ALL=en_US.UTF-8
+$ locale-gen en_US.UTF-8
+$ dpkg-reconfigure locales
+
+22. Change model number in dtb
+
+eg: Machine model: Freescale i.MX6 IRIS Board in arch/arm/boot/dts/imx6dl-sabresd.dts
+
+23. Exract cpio initramfs file in  linux
+
+gzip -d file.cpio.gz
+cpio -idm < file.cpio
+
+24. Create a ramdisk
+
+find . | cpio --create --format='newc' | gzip > ../ramdisk.cpio.gz
+mkimage -A arm -O linux -T ramdisk -C none -a 0x12C00000 -n ramdisk -d ../ramdisk.cpio.gz ../initramfs.cpio.gz
+
+25. Gpio setup in DTB
+
+eg:
+&gpio0 {
+     gpios = < 5 GPIO_ACTIVE_LOW >;
+ }; 
+ 
+ &gpio1 {
+     gpios = < 19 GPIO_ACTIVE_HIGH >;
+ };
+
+eg: 0x12c00000 is the entry address of kernel
+
+26. Wifi config
+
+interface=mlan0
+driver=nl80211
+ieee80211n=1
+ssid=__SSID__
+hw_mode=g
+channel=1
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=__PASS__
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+
+27. Startup application changing
+original file in vi usr/bin/mini-x-session
+vi etc/X11/Xsession.d/90xXWindowManager.sh <symbolic link>
+
+28. Ethernet setup
+setenv netdev eth0
+setenv ethprime FEC0
+setenv ethact FEC0
+setenv ethaddr 00:01:02:03:04:05
+setenv fec_addr 00:01:02:03:04:05
+setenv ipaddr 192.168.0.150
+setenv serverip 192.168.0.86
+setenv gatewayip 192.168.0.1
+saveenv
+
+29. Kernel local version change using 
+CONFIG_LOCALVERSION=""
+# CONFIG_LOCALVERSION_AUTO is not set
+
+Note: Make menuconfig -> general setup -> remove local version append & remove append string in local version
+
+30. GPIO Calculation for i.MX6
+For example, i.MX6 GPIO2_4 (port 2, pin 4) translates to: (2 - 1) * 32 + 4 = 36
+
+31 PWM Debug
+cat /sys/kernel/debug/pwm
+
+32 Cursor Hiding in yocto
+vi /etc/X11/xserver-common
+Pass this argiments to hide pointer ARGS=" -br -pn -nocursor"
+
+33. Hannstar display backlight
+hannstar_cabc {
+                compatible = "hannstar,cabc";
+
+        lvds0 {
+                gpios = <&gpio1 21 GPIO_ACTIVE_LOW>;
+                cabc-enable;   //It is very important here. Or it will reverse the configuration.
+        };
+
+        lvds1 {
+                 gpios = <&gpio1 21 GPIO_ACTIVE_HIGH>;
+        };
+
+        };
+
+34 Runtime scripts for cluster startup
+
+vi /etc/rc5.d/S17clusterstartup
+export DISPLAY=:0.0
+export PORTNAME=ttyUSB0
+/home/root/iris/services/Vehicle_Interface_Service&
+/home/root/iris/QTexecutables/Cluster&
+
+35 For Wifi runtime loading
+
+vi /etc/init.d/wifiapd
+sudo chmod 755 /etc/init.d/wifiapd
+
+#!/bin/sh
+NAME=Wifiapd
+
+set -e
+
+case "$1" in
+    start)
+        echo -n "Starting $NAME: "
+        insmod /lib/modules/mlan.ko
+        insmod /lib/modules/sd8801.ko
+        ifconfig mlan0 up
+		ifup mlan0
+        ;;
+    stop)
+        echo -n "Stopping $NAME: "
+		ifdown mlan0
+        ifconfig mlan0 down
+        rmmod sd8xxx
+        rmmod mlan
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reload}"
+        exit 1
+        ;;
+esac
+
+exit 0
+
+ln -s /etc/init.d/wifiapd /etc/rc5.d/S17wifiapd
+ln -s /etc/init.d/wifiapd /etc/rc6.d/K20wifiapd
+
+vi /etc/network/interfaces
+auto mlan0
+iface mlan0 inet dhcp
+       wireless_mode managed
+       wireless_essid any
+       wpa-driver wext
+       wpa-conf /etc/wpa_supplicant.conf
+
+vi /etc/wpa_supplicant.conf
+
+ctrl_interface=/var/run/wpa_supplicant
+ctrl_interface_group=0
+update_config=1
+network={
+    ssid="One"
+    scan_ssid=1
+    key_mgmt=WPA-PSK
+    psk="12345678"
+}
+
+36 Setting static ip for wifi & ethernet
+auto eth0 or mlan0
+iface eth0 inet static
+        address 192.168.1.100
+        netmask 255.255.255.0
+        network 192.168.1.0
+        gateway 192.168.1.1
+
+37 For testing remove these files in init.d
+alsa-state avahi-daemon crond ntpd rpcbind apmd bootlogd neard ofono
+
+38 exporting any variable in runtime
+vi /etc/profile
+eg:
+export PATH PS1 OPIEDIR QPEDIR QTDIR EDITOR TERM
+export DISPLAY=:0.0
+
+39 LVDS Arrguments.
+lcd=video=mxcfb0:dev=ldb,if=RGB24,bpp=32 video=mxcfb1:off video=mxcfb2:off video=mxcfb3:off
+
+40 12.3 Inch LVDS Setup for iwave board
+
+vi arch/arm/boot/dts/imx6qdl-iwg15m-q7.dtsi
+
+ mxcfb1: fb@0 {
+                compatible = "fsl,mxc_sdc_fb";
+                disp_dev = "ldb";
+                interface_pix_fmt = "RGB24";
+                default_bpp = <24>;
+                int_clk = <0>;
+                late_init = <0>;
+                status = "okay";
+        };
+
+&ldb {
+        /*dual-mode = <1>;*/
+        split-mode = <1>;
+        status = "okay";
+
+        lvds-channel@0 {
+                fsl,data-mapping = "spwg";
+                fsl,data-width = <24>;
+                primary;
+                crtc = "ipu2-di0";
+                status = "okay";
+
+                display-timings {
+                        native-mode = <&timing0>;
+                        timing0: ldb-wvga {
+                                /*clock-frequency = <33260000>;*/
+                                clock-frequency = <89400000>;
+                                hactive = <1920>;
+                                vactive = <720>;
+                                hback-porch = <96>;
+                                hfront-porch = <30>;
+                                vback-porch = <3>;
+                                vfront-porch = <3>;
+                                hsync-len = <2>;
+                                vsync-len = <2>;
+								hsync-active = <0>;
+                                vsync-active = <0>;
+                                pixelclk-active = <0>;
+                        };
+                };
+        };
+
+};
+
+used in the pmic ldobypadd dts if needed
+&ldb {
+        lvds-channel@0 {
+
+                crtc = "ipu2-di0";
+
+        };
+
+        lvds-channel@1 {
+
+                crtc = "ipu2-di1";
+
+        };
+};
+
+
+or need to check this file for 12.3 inch display for iwave dev board
+https://www.toradex.cn/community/questions/30409/ixora-carrier-board-v11-lvds-2-port.html check for display setup 
+https://community.nxp.com/docs/DOC-342063
+vi arch/arm/boot/dts/imx6qd-iwg15m-q7_ldoactive.dts
+&ldb {
+        lvds-channel@1 {
+                fsl,data-mapping = "spwg";
+                fsl,data-width = <24>;
+                crtc = "ipu2-di1";
+                status = "okay";
+
+                display-timings {
+                        native-mode = <&timing1>;
+                        timing1: ldb-svga {
+                                /*clock-frequency = <40000000>;
+                                hactive = <800>;
+                                vactive = <600>;
+                                hback-porch = <8>;
+                                hfront-porch = <8>;
+                                vback-porch = <6>;
+                                vfront-porch = <6>;
+                                hsync-len = <8>;
+                                vsync-len = <6>;*/
+                                clock-frequency = <89400000>;
+                                hactive = <1920>;
+                                vactive = <720>;
+                                hback-porch = <96>;
+                                hfront-porch = <30>;
+                                vback-porch = <3>;
+                                vfront-porch = <3>;
+                                hsync-len = <2>;
+                                vsync-len = <2>;
+                        };
+                };
+        };
+};
+
+41 VNC Screen porting mirroring
+
+tightvncviewer -fullscreen -compresslevel 9 -quality 9 -x11cursor -depth 9 -noraiseonbeep -noshared -truecolour 26.128.213.86:5901
+
+wpa_supplicant -B -i wlan0 -D wext -c /etc/wpa_supplicant/example.conf
+
+42 For QT HOST PACKAGE DOWNLOAD LINK
+http://download.qt-project.org/
+
+43. ADB & FASTBOOT FOR YOCTO INSTALLATION
+https://android.serverbox.ch/?p=1217
+
+44. FFMPEG COMPILING STEPS:
+./configure --enable-ffplay --enable-cross-compile --cc=arm-poky-linux-gnueabi-gcc --arch=arm --target-os=linux --disable-ffserver --disable-stripping
+
+Screen Mirroring commands
+adb shell screenrecord --output-format=h264 - | ffplay -
+adb shell screenrecord --bit-rate=16m --output-format=h264 --size 800x600 - | ffplay -framerate 60 -framedrop -bufsize 16M -
+
+45. GCC Setup for cross compiling
+arm-poky-linux-gnueabi-gcc -mfloat-abi=hard -I=/opt/poky/2.4/sysroots/cortexa9hf-neon-poky-linux-gnueabi/usr/include/ --sysroot=/opt/poky/2.4/sysroots/cortexa9hf-neon-poky-linux-gnueabi/ main.c -o main
+or try this
+arm-linux-gnu-gcc -I/usr/local/target/include myinit.c -L/usr/local/target/lib -lc
+===========================================================================================
+46. USB OTG ENABLEING
+https://freescale.jiveon.com/docs/DOC-335434
+
+vi arch/arm/boot/dts/imx6qdl-sabresd.dtsi
+reg_usb_otg_vbus: regulator@0 {
+                        compatible = "regulator-fixed";
+                        reg = <0>;
+                        regulator-name = "usb_otg_vbus";
+                        regulator-min-microvolt = <5000000>;
+                        regulator-max-microvolt = <5000000>;
+                        gpio = <&gpio3 22 0>;
+                        enable-active-high;
+                };
+
+reg_usb_h1_vbus: regulator@1 {
+                        compatible = "regulator-fixed";
+                        reg = <1>;
+                        regulator-name = "usb_h1_vbus";
+                        regulator-min-microvolt = <5000000>;
+                        regulator-max-microvolt = <5000000>;
+                        /*gpio = <&gpio1 29 0>;
+                        enable-active-high;*/
+                        enable-active-low;
+                };
+
+pinctrl_usbotg: usbotggrp {
+                        fsl,pins = <
+                                MX6QDL_PAD_GPIO_1__USB_OTG_ID           0x17059
+                                MX6QDL_PAD_EIM_D22__GPIO3_IO22          0x80000000
+                        /*      MX6QDL_PAD_KEY_COL4__USB_OTG_OC         0x17059*/
+                        >;
+                };
+
+&usbh1 {
+        vbus-supply = <&reg_usb_h1_vbus>;
+        status = "disabled";
+};
+
+&usbotg {
+        vbus-supply = <&reg_usb_otg_vbus>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_usbotg>;
+        disable-over-current;
+        srp-disable;
+        hnp-disable;
+        adp-disable;
+        dr_mode = "otg";
+        status = "okay";
+};
+=========================================================================================
+
+Need to set for ethernet in kernel
+&gem0 {
+	phy-handle = <&phy0>;
+	phy-mode = "rgmii-id";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;	
+		phy0:phy@3 {
+			compatible = "micrel,ksz9031";
+			device_type = "ethernet-phy";
+			reg = <3>;
+			} ;
+	} ; 
+};
+
+Screen flickering x11 server
+https://community.nxp.com/t5/i-MX-Processors-Knowledge-Base/Patch-to-support-uboot-logo-keep-from-uboot-to-kernel-for-NXP/ta-p/1120770
+
+Floating point for GPU
+To build with hardware floating point
+DEFAULTTUNE_mx6 = "cortexa9hf-neon
+
+To build with software floating point, add the following to local.conf
+DEFAULTTUNE_mx6 = "cortexa9-neon"
+
+Serial console in yocto 
+vi /etc/inittab
+eg:
+S1:23:respawn:/sbin/getty -L ttyS1 9600 vt100
+
+Serial autologind in yocto
+vi /poky/meta/recipes-core/sysvinit/sysvinit-inittab/inittab
+
+EXTRA_IMAGE_FEATURES = "debug-tweaks "
+IMAGE_INSTALL_append = " mingetty "  
+
+#1:2345:respawn:/sbin/getty 38400 tty1
+1:2345:respawn:/sbin/mingetty --autologin root tty1
+
+update java alternatives in ubuntu
+
+$ update-java-alternatives -l
+
+then execute the below example command with ur installed version name to update
+
+$ update-java-alternatives java-1.7.0-openjdk-i386
+
+Matchbox-desktop icon adding
+https://community.nxp.com/t5/i-MX-Processors/How-to-add-desktop-icon-for-custom-app-to-Sato-desktop/m-p/338901
+
+SPL Guide
+https://community.nxp.com/t5/T-Series/Is-SPL-image-support-NOR-flash/m-p/889357
+
+Linux guide
+https://hev.cc/2227.html
+
+CAMM
+https://community.nxp.com/thread/429895
+
+Official git repos are closed and using the below link for fresh source download.
+https://source.codeaurora.org/external/imx
+
+https://www.itdaan.com/blog/2017/07/29/c7f0c0ccb5c6c93f0aa236a667945f5d.html
+
+https://github.com/sj15712795029 ublox wifi
+
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- INSTALL_MOD_PATH=/path/to/target modules_install
+http://trac.gateworks.com/wiki/ventana/bootloader know about bootloader
+
+github.com/AmarulaElectronics/BlueNrg
+
+============================================================
+YOCTO DAISY BUILD CONF
+
+BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
+PARALLEL_MAKE ?= "-j ${@oe.utils.cpu_count()}"
+MACHINE ??= 'imx6solosabresd'
+DISTRO ?= 'poky'
+PACKAGE_CLASSES ?= "package_rpm"
+EXTRA_IMAGE_FEATURES = "debug-tweaks"
+USER_CLASSES ?= "buildstats image-mklibs image-prelink"
+PATCHRESOLVE = "noop"
+BB_DISKMON_DIRS = "\
+    STOPTASKS,${TMPDIR},1G,100K \
+    STOPTASKS,${DL_DIR},1G,100K \
+    STOPTASKS,${SSTATE_DIR},1G,100K \
+    ABORT,${TMPDIR},100M,1K \
+    ABORT,${DL_DIR},100M,1K \
+    ABORT,${SSTATE_DIR},100M,1K"
+PACKAGECONFIG_pn-qemu-native = "sdl"
+PACKAGECONFIG_pn-nativesdk-qemu = "sdl"
+ASSUME_PROVIDED += "libsdl-native"
+CONF_VERSION = "1"
+
+PREFERRED_PROVIDER_jpeg = "libjpeg-turbo"
+PREFERRED_PROVIDER_shlib = "libjpeg-turbo"
+PREFERRED_PROVIDER_jpeg-native = "libjpeg-turbo-native"
+PREFERRED_PROVIDER_virtual/mesa = "mesa"
+PREFERRED_PROVIDER_virtual/libgl = "gpu-viv-bin-mx6q"
+PREFERRED_PROVIDER_mesa-driver-swrast = "mesa-gl"
+
+INHERIT += "rm_work"
+
+BB_NUMBER_THREADS = '4'
+PARALLEL_MAKE = '-j 4'
+
+CORE_IMAGE_EXTRA_INSTALL ?= "android-tools tzdata tightvnc x11vnc firefox"
+
+TOOLCHAIN_TARGET_TASK_append += "lcms tslib libusb1 libusb-compat libsdl libsdl-ttf libsdl2 pcsc-lite qextserialport icu libice jpeg libjpeg-turbo fltk"
+
+DL_DIR ?= "/home/balakrishnan/userFSLimx6YoctoBuildDir/fsl-release-bsp/downloads/"
+SSTATE_DIR ?= "/home/balakrishnan/userFSLimx6YoctoBuildDir/fsl-release-bsp/sstate-cache"
+
+PACKAGECONFIG_append_pn-qtbase = " accessibility"
+PACKAGECONFIG_append_pn-qtquickcontrols = " accessibility"
+
+LICENSE_FLAGS_WHITELIST = "commercial"
+ACCEPT_FSL_EULA = "1"
+
+1. Yocto test links.
+Customizing the fsl-image-qt5
+https://community.nxp.com/t5/i-MX-Processors/yocto-Unwanted-dev-and-debug-packages-included-in-my-final-image/td-p/809014
+
+2. Toolchain configuration in yocto 
+eg: for gcc 4.8
+TARGET_CC_ARCH = "-march=armv7 -mfpu=vfp -mfloat-abi=softfp"
+
+3. Case for creating a symbloic link in rootfs
+eg:
+my_image_postprocess_function() {
+    ln -sf /usr/lib/python3.5/pdb.py ${IMAGE_ROOTFS}/usr/bin/pdb
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "my_image_postprocess_function; "
+
+2nd type is using bbappend file in yocto
+
+# Create symlink at the end of do_install
+do_install_append() {
+    ln -sf /usr/lib/python3.5/pdb.py ${D}/usr/bin/pdb
+}
+
+# Include the symlink in the python3-debugger package
+FILES_${PN}-debugger += "/usr/bin/pdb"
+
+4. Remove unneeded file in rootfs after yocto build
+eg:
+do_install_append() {
+    rm -f ${D}/usr/lib/qt5/plugins/mediaservice/a.so.1.0 ...
+}
+========================================================
+Add inittab lines
+I created a bbappend for the recipe which installs inittab. In my case it was sysvinit-inittab_2.88dsf.bb. In the bbappend file add:
+
+do_install_append(){
+
+    echo "MM:12345:respawn:/sbin/startapp.py" >> ${D}${sysconfdir}/inittab
+
+}
+
+for examples in yocto and qt-project
+http://www.yuanmacha.com/194536967.html
+Kerel size tunning
+https://community.nxp.com/t5/Layerscape/How-to-reduce-the-kernel-image-size/m-p/415347
+
+FOR GPU Profiler enable
+https://community.nxp.com/t5/i-MX-Processors/GPU-Profiling-with-Vivante-VDK-Tools/m-p/309721s
+U-boot>
+
+env set bootargs_mmc setenv bootargs \${bootargs_base} root=/dev/mmcblk2p2 rootwait rw \${lcd} \${hdmi} galcore.gpuProfiler=1
+saveenv
+boot
+Noticed that I just added galcore.gpuProfiler=1 to my current bootcmd variable.
+
+You can confirmed if it worked using the following command from the shell:
+
+cat /sys/module/galcore/parameters/gpuProfiler 
+
+if you get a 1, it worked. 
+
+Then you have to export the following env vars in the current session. In this case it is a X11 session, since I am going to profile an opengl application:
+
+export VIV_PROFILE=1
+export VP_OUTPUT=sample.vpd
+export VP_FRAME_NUM=0
+export VP_FRAME_START=0
+export VP_FRAME_END=0
+export VP_SYNC_MODE=0
+Finally you just have to run the application and the driver will create a file called sample.vpd in the running directory.
+
+In case anyone does set =1 in kernel 4.1.15 bootparams and gpuProfiler does not get enabled (you get an empty vpd file), you can try replacing the value with the hex version of it, then also add showArgs, which will printout a debug message in dmesg while booting:
+
+galcore.gpuProfiler=0x1 galcore.showArgs=0x1 
+
+eg:
+
+[ 2.009390] Galcore version 5.0.11.41671
+[ 2.015418] Galcore options:
+[ 2.021366] irqLine = 310
+[ 2.028173] registerMemBase = 0x00130000
+[ 2.035534] registerMemSize = 0x00004000
+[ 2.039851] irqLine2D = 311
+[ 2.043522] registerMemBase2D = 0x00134000
+[ 2.047869] registerMemSize2D = 0x00004000
+[ 2.052161] contiguousSize = 134217728
+[ 2.056395] contiguousBase = 0x00000000
+[ 2.060701] bankSize = 0x00000000
+[ 2.065031] fastClear = -1
+[ 2.068660] compression = -1
+[ 2.072283] signal = 48
+[ 2.075973] powerManagement = -1
+[ 2.079628] baseAddress = 0x00000000
+[ 2.083958] usb 1-1: New USB device found, idVendor=0424, idProduct=2534
+[ 2.090714] physSize = 0x80000000
+[ 2.095040] usb 1-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[ 2.102219] logFileSize = 0 KB
+[ 2.106090] recovery = 1
+[ 2.109584] stuckDump = 0
+[ 2.113076] gpuProfiler = 1
+
+to confirm gpuProfiler variable was set to 1 and should be enabled.
+
+Parallel LCD Enable in imx6
+https://github.com/Freescale/u-boot-fslc/commit/07425b2ac0e86248aeabe8db761f3ef1283e2695
+
+Kernel parameters
+https://www.kernel.org/doc/html/v4.14/admin-guide/kernel-parameters.html
+
+some linux imx6 tutorials
+https://www.cnblogs.com/helloworldtoyou/category/813842.html?page=4
+
+Parallel display setup in linux:
+disp1: display@disp1 {
+       compatible = "fsl,imx-parallel-display";
+       pinctrl-names = "default";
+       pinctrl-0 = <&pinctrl_disp1_1>;
+       crtcs = <&ipu 1>;
+       interface-pix-fmt = "rgb24";
+       status = "okay";
+      display-timings {
+            tx14d11vm1cpd {
+            clock-frequency = <5847953>;
+            hactive = <320>;
+            vactive = <240>;
+            hfront-porch = <30>;
+            hback-porch = <30>;
+            hsync-len = <5>;
+            vback-porch = <5>;
+            vfront-porch = <6>;
+            vsync-len = <2>;
+            pixelclk-active = <1>;
+            hsync-active = <0>;
+            vsync-active = <0>;
+            de-active = <1>;
+            };
+       };
+  };
+
+Kernel Boot Commands:  
+CONFIG_CMDLINE="console=ttymxc0,115200 lpj=30000 root=/dev/mmcblk1p2 rootfstype=ext4 rootwait rw psplash=false maxcpus=1 consoleblank=0 vt.global_cursor_default=0 video=mxcfb0:dev=ldb,if=RGB666 video=mxcfb1:off video=mxcfb2:off fec.macaddr=0x96,0x75,0x99,0xea,0x19,0x26"
+
+For TFTP boot setting network port forwarding is required
+eg :Port Number 69
+
+Kernel configuration backup:
+make a changes in defconfig and execute make savedefconfig.
+
+Patching kernel
+diff -Naur a/ b/ > example.patch
+
+Systemv source:
+http://download.savannah.gnu.org/releases/sysvinit/
+
+Display documents:
+https://www.digi.com/resources/documentation/digidocs/90001945-13/reference/yocto/r_an_adding_custom_display.
+Colour formate
+https://e2e.ti.com/support/interface/f/138/t/681048
+https://wikitech.seco.com/index.php/BSP_Customization
+
+This are things need to change to move from defaut kernel version to other
+==========================================================================
+vi ../sources/meta-fsl-arm/conf/machine/include/imx6sabresd-common.inc /* This is for the base
+vi ../sources/meta-fsl-arm/conf/machine/include/imx-base.inc /* This is for the imx base
+vi ../sources/meta-fsl-arm/conf/machine/include/fsl-default-providers.inc /* This is for the default providers
+vi ../sources/meta-fsl-bsp-release/imx/meta-fsl-arm/conf/layer.conf /* This are the prefered version
+
+To find the virtual kernel version
+$ bitbake virtual/kernel -e | grep PREFERRED_PROVIDER_virtual/kernel
+$ bitbake -c menuconfig virtual/kernel
+$ bitbake -c savedefconfig virtual/kernel
+
+Yocto Qt Application runtime changes
+vi sources/poky/meta/recipes-graphics/mini-x-session/files/mini-x-session
+vi sources/poky/meta/recipes-core/base-files/base-files/profile
+vi sources/meta-fsl-arm/recipes-graphics/xorg-xserver/xserver-xf86-config/mx6/xorg.conf
+

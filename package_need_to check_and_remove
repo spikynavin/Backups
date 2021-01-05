@@ -1,0 +1,55 @@
+Packages removed
+
+matchbox-appearance matchbox-keyboard matchbox-remote matchbox-terminal matchbox-desktop matchbox-panel matchbox-session matchbox-window-manager
+
+Rootfs name ============ yocto package name
+
+ltp/testcases
+viv_samples
+fsl-gpu-sdk
+gdk-pixbuf
+piglit
+imx-mm
+connman
+elfutils
+ofono
+opkg
+python2.7
+pkgconfig
+cmake
+xtables
+perl
+neard
+rpm
+opencv
+systemtap
+ca-certificates
+mesa-demo
+pygobject
+swig
+pulseaudio
+imx-mm/video-codec/examples/
+imx-mm/audio-codec/examples/
+gdb
+glmark2
+awk
+mime
+pixmaps
+terminfo
+gtk-doc
+themes
+lmbench
+gettext
+wayland
+oprofile
+icons
+eigen3
+
+PACKAGECONFIG_append_pn-qtbase = " tools icu examples accessibility gl udev openssl widgets developer sql-sqlite sql-mysql sql-psql sm"
+PACKAGECONFIG_remove_pn-qttools= "qtwebkit"
+
+Added packagen
+owl-video video player
+gaku music player
+
+IMAGE_INSTALL_remove_pn-fsl-image-qt5 = " alsa" or try with += instead of =

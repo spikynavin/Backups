@@ -1,0 +1,128 @@
+random: nonblocking pool is initialized
+
+
+U-Boot 2014.04 (Aug 19 2020 - 08:53:05)
+
+CPU:   Freescale i.MX6SOLO rev1.2 at 792 MHz
+CPU:   Temperature 42 C, calibration data: 0x59c4ef7d
+Reset cause: POR
+Boot Device: SPI_NOR_BOOT
+I2C:   ready
+DRAM:  512 MiB
+MMC:   FSL_SDHC: 0
+*** Warning - bad CRC, using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+Net:   CPU Net Initialization Failed
+No ethernet found.
+Normal Boot
+Hit any key to stop autoboot:  0
+mmc0(part 0) is current device
+reading uImage
+1853064 bytes read in 59 ms (30 MiB/s)
+reading imx6dl-sabresd.dtb
+50380 bytes read in 18 ms (2.7 MiB/s)
+## Booting kernel from Legacy Image at 12000000 ...
+   Image Name:   Linux-4.14.98-05985-g1175b59
+   Image Type:   ARM Linux Kernel Image (uncompressed)
+   Data Size:    1853000 Bytes = 1.8 MiB
+   Load Address: 10800000
+   Entry Point:  10800000
+   Verifying Checksum ... OK
+## Flattened Device Tree blob at 18000000
+   Booting using the fdt blob at 0x18000000
+   Loading Kernel Image ... OK
+   Using Device Tree in place at 18000000, end 1800f4cb
+
+Starting kernel ...
+
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Linux version 4.14.98-05985-g1175b59 (naveen@balakrishnan-HCL-Desktop) (gcc version 7.3.0 (GCC)) #1 Wed Oct 21 12:11:16 IST 2020
+[    0.000000] CPU: ARMv7 Processor [412fc09a] revision 10 (ARMv7), cr=10c53c7d
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+[    0.000000] OF: fdt: Machine model: Freescale i.MX6 DualLite SABRE Smart Device Board
+[    0.000000] Memory policy: Data cache writeback
+[    0.000000] CPU: All CPU(s) started in SVC mode.
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 130048
+[    0.000000] Kernel command line: console=ttymxc0,115200n8 lpj=7905280 root=/dev/mmcblk2p2 rootwait rw video=mxcfb0:dev=ldb,LDB-XGA,if=RGB24 video=mxcfb1:dev=hdmi,1280x720M@60,if=RGB24 video=mxcfb2:off video=mxcfb3:off
+[    0.000000] PID hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.000000] Dentry cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 5, 131072 bytes)
+[    0.000000] Memory: 186136K/524288K available (3072K kernel code, 285K rwdata, 524K rodata, 1024K init, 304K bss, 338152K reserved, 0K cma-reserved)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+[    0.000000]     vmalloc : 0xe0800000 - 0xff800000   ( 496 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xe0000000   ( 512 MB)
+[    0.000000]       .text : 0xc0008000 - 0xc0400000   (4064 kB)
+[    0.000000]       .init : 0xc0500000 - 0xc0600000   (1024 kB)
+[    0.000000]       .data : 0xc0600000 - 0xc06475c0   ( 286 kB)
+[    0.000000]        .bss : 0xc06475c0 - 0xc0693974   ( 305 kB)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 16, nr_irqs: 16, preallocated irqs: 16
+[    0.000000] Switching to timer-based delay loop, resolution 333ns
+[    0.000008] sched_clock: 32 bits at 3000kHz, resolution 333ns, wraps every 715827882841ns
+[    0.000025] clocksource: mxc_timer1: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 637086815595 ns
+[    0.001641] Calibrating delay loop (skipped) preset value.. 1581.05 BogoMIPS (lpj=7905280)
+[    0.001664] pid_max: default: 32768 minimum: 301
+[    0.001796] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.001817] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.002079] ------------[ cut here ]------------
+[    0.002111] WARNING: CPU: 0 PID: 0 at kernel/cgroup/cgroup.c:5267 cgroup_init+0x118/0x154
+[    0.002124] CPU: 0 PID: 0 Comm: swapper Not tainted 4.14.98-05985-g1175b59 #1
+[    0.002131] Hardware name: Freescale i.MX6 Quad/DualLite (Device Tree)
+[    0.002137] Backtrace:
+[    0.002171] [<c010ab98>] (dump_backtrace) from [<c010ae24>] (show_stack+0x18/0x1c)
+[    0.002184]  r7:00000009 r6:00000000 r5:c04626b8 r4:00000000
+[    0.002204] [<c010ae0c>] (show_stack) from [<c0358010>] (dump_stack+0x20/0x28)
+[    0.002220] [<c0357ff0>] (dump_stack) from [<c011ba8c>] (__warn+0xd4/0xfc)
+[    0.002234] [<c011b9b8>] (__warn) from [<c011bb68>] (warn_slowpath_null+0x28/0x30)
+[    0.002245]  r9:cbffc840 r8:c06475c0 r7:c068d7d4 r6:c060d8c0 r5:c068d7d0 r4:c060d888
+[    0.002261] [<c011bb40>] (warn_slowpath_null) from [<c050a31c>] (cgroup_init+0x118/0x154)
+[    0.002280] [<c050a204>] (cgroup_init) from [<c0500d34>] (start_kernel+0x300/0x378)
+[    0.002289]  r7:c0603000 r6:c06475c0 r5:ffffffff r4:c06475fc
+[    0.002300] [<c0500a34>] (start_kernel) from [<10008078>] (0x10008078)
+[    0.002310]  r10:00000000 r9:412fc09a r8:10004059 r7:c06047ac r6:c0520a24 r5:c0603018
+[    0.002316]  r4:c0647754
+[    0.002331] random: get_random_bytes called from print_oops_end_marker+0x40/0x50 with crng_init=0
+[    0.002342] ---[ end trace e9a0ebced09f9758 ]---
+[    0.002349] CPU: Testing write buffer coherency: ok
+[    0.002379] CPU0: Spectre v2: using BPIALL workaround
+[    0.002984] Setting up static identity map for 0x10100000 - 0x10100078
+[    0.003668] VFP support v0.3: implementor 41 architecture 3 part 30 variant 9 rev 4
+[    0.003741] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.003760] futex hash table entries: 256 (order: -1, 3072 bytes)
+[    0.003814] pinctrl core: initialized pinctrl subsystem
+[    0.004670] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.004806] CPU identified as i.MX6DL, silicon rev 1.2
+[    0.017998] hw-breakpoint: found 5 (+1 reserved) breakpoint and 1 watchpoint registers.
+[    0.018013] hw-breakpoint: maximum watchpoint size is 4 bytes.
+[    0.018774] imx6dl-pinctrl 20e0000.iomuxc: initialized IMX pinctrl driver
+[    0.025946] clocksource: Switched to clocksource mxc_timer1
+[    0.027488] Bus freq driver module loaded
+[    0.027987] workingset: timestamp_bits=30 max_order=16 bucket_order=0
+[    0.028195] io scheduler noop registered (default)
+[    0.028210] io scheduler mq-deadline registered
+[    0.028217] io scheduler kyber registered
+[    0.030178] 2020000.serial: ttymxc0 at MMIO 0x2020000 (irq = 27, base_baud = 5000000) is a IMX
+[    0.490236] console [ttymxc0] enabled
+[    0.494780] IR NEC protocol handler initialized
+[    0.499361] IR RC5(x/sz) protocol handler initialized
+[    0.504421] IR RC6 protocol handler initialized
+[    0.508977] IR JVC protocol handler initialized
+[    0.513512] IR Sony protocol handler initialized
+[    0.518152] IR SANYO protocol handler initialized
+[    0.522861] IR Sharp protocol handler initialized
+[    0.527586] IR MCE Keyboard/mouse protocol handler initialized
+[    0.533424] IR XMP protocol handler initialized
+[    0.538003] sdhci: Secure Digital Host Controller Interface driver
+[    0.544189] sdhci: Copyright(c) Pierre Ossman
+[    0.548572] sdhci-pltfm: SDHCI platform and OF driver helper
+[    0.615985] mmc0: SDHCI controller on 2194000.usdhc [2194000.usdhc] using ADMA
+[    0.661171] mmc0: new high speed SDIO card at address 0001
+[    0.685994] mmc1: SDHCI controller on 219c000.usdhc [219c000.usdhc] using ADMA
+[    0.694504] mxc_vpu 2040000.vpu_fsl: VPU initialized
+[    0.705557] galcore: clk_get vg clock failed, disable vg!
+[    0.711823] Galcore version 6.2.4.190076

@@ -1,0 +1,50 @@
+PACKAGE_EXCLUDE_pn-fsl-image-gui = " alsa-lib alsa-lib-native alsa-oss alsa-state alsa-tools alsa-utils fsl-alsa-plugins"
+
+Provider 					  package
+
+1. packagegroup-base-alsa ====> alsa-state
+2. packagegroup-fsl-tools-testapps ====> alsa-utils
+
+Fsl-testapps path
+vi ../sources/meta-fsl-demos/recipes-fsl/packagegroups/packagegroup-fsl-tools-testapps.bb
+Fsl-testapps append path
+vi ../sources/meta-fsl-bsp-release/imx/meta-fsl-demos/recipes-fsl/packagegroup/packagegroup-fsl-tools-testapps.bbappend
+
+Backup in fsl-yocto-setup
+
+
+alsa-utils-alsaconf fsl-alsa-plugins
+
+alignment.sh              modutils.sh               save-rtc.sh
+apmd                      mountall.sh               sendsigs
+avahi-daemon              mountnfs.sh               single
+banner.sh                 networking                stop-bootlogd
+bootlogd                  populate-volatile.sh      sysfs.sh
+bootmisc.sh               psplash.sh                syslog
+checkroot.sh              rc                        syslog.busybox
+dbus-1                    rcS                       udev
+devpts.sh                 rc_gpu.S                  udev-cache
+dmesg.sh                  rc_mxc.S                  umountfs
+functions                 read-only-rootfs-hook.sh  umountnfs.sh
+functions.initscripts     reboot                    urandom
+halt                      rmnologin.sh              xserver-nodm
+hostname.sh               rpcbind
+hwclock.sh                run-postinsts
+
+image_strip() {
+        #${BUILD_STRIP} ${IMAGE_ROOTFS}/usr/lib/lib*
+		rm -rf ${IMAGE_ROOTFS}/usr/lib/python2.7
+		rm -rf ${IMAGE_ROOTFS}/usr/lib/*.a
+		rm -rf ${IMAGE_ROOTFS}/lib/*.a
+        rm -r ${IMAGE_ROOTFS}/etc/init.d/mountnfs.sh
+        rm -r ${IMAGE_ROOTFS}/etc/init.d/umountnfs.sh
+        rm -r ${IMAGE_ROOTFS}/etc/init.d/avahi-daemon
+        rm -r ${IMAGE_ROOTFS}/etc/init.d/apmd
+}
+ROOTFS_POSTPROCESS_COMMAND += "image_strip;"
+
+rm -rf ${IMAGE_ROOTFS}/usr/bin/python*
+rm -rf ${IMAGE_ROOTFS}/usr/lib/libpython2.7.so.1.0
+libpython2.7.so.1.0
+python            python2           python2.7
+python-config     python2-config    python2.7-config

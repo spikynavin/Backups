@@ -1,0 +1,68 @@
+Yocto fresh compiling
+
+DISTRO ?= "poky"
+CPPFLAGS_append_pn-ncurses-native = " -P"
+SDKMACHINE ?= "i686"
+
+#EXTRA_IMAGE_FEATURES = "tools-debug tools-profile tools-testapps debug-tweaks"
+MKLIBS_OPTIMIZED_IMAGES ?= "all"
+USER_CLASSES ?= "image-mklibs image-prelink"
+DEBUG_BUILD = "1"
+
+#Machine tuning...
+MACHINE_FEATURES_remove = "alsa keyboard apm pci"
+DISTRO_FEATURES_remove = "wifi bluetooth nfc nfs 3g"
+ 
+#Package tuning...
+PACKAGE_EXCLUDE_pn-iris-image-qt5 = " alsa-state alsa-tools alsa-utils fsl-alsa-plugins python matchbox-terminal "
+PACKAGECONFIG_append_pn-qtbase = " tools icu accessibility gl udev openssl widgets developer sql-sqlite sql-mysql sql-psql sm"
+PACKAGECONFIG_remove_pn-qttools= " qtwebkit examples tslib fontconfig "
+
+
+Things changed for optimizing:
+
+vi poky/meta/recipes-graphics/images/core-image-x11.bb /*Simple x11 support in rootfs*/
+vi meta-fsl-bsp-release/imx/meta-fsl-demos/recipes-fsl/images/fsl-image-qt5.bb /*Full qt5 support in rootfs*/
+vi poky/meta/recipes-graphics/packagegroups/packagegroup-core-x11-base.bb /* Packagegroup for x11-base*/
+vi poky/meta/recipes-core/packagegroups/packagegroup-base.bb /* remove uneeded package in base*/
+
+
+
+CONFLICT_DISTRO_FEATURES = "directfb"
+
+X11_IMAGE_INSTALL = "${@base_contains('DISTRO_FEATURES', 'x11', \
+    'libxkbcommon', '', d)}"
+
+WLD_IMAGE_INSTALL = "${@base_contains('DISTRO_FEATURES', 'wayland', \
+    'qtwayland \
+     qtwayland-plugins', '', d)}"
+
+OPENCV_INSTALL = "opencv opencv-dev opencv-apps opencv-samples"
+
+QT5_IMAGE_INSTALL = ""
+QT5_IMAGE_INSTALL_common = " \
+    packagegroup-qt5-core \
+    packagegroup-qt5-qtdeclarative \
+    packagegroup-qt5-qtdeclarative-qml \
+    packagegroup-qt5-demos \
+    ${X11_IMAGE_INSTALL} \
+    ${WLD_IMAGE_INSTALL} \
+    ${OPENCV_INSTALL} \
+    "
+QT5_IMAGE_INSTALL_mx6 = " \
+    ${QT5_IMAGE_INSTALL_common} \
+    packagegroup-qt5-webkit \
+    "
+
+export IMAGE_BASENAME = "fsl-image-qt5"
+
+# Enabling gstreamer in yocto
+IMAGE_INSTALL_append = " \
+ packagegroup-fsl-gstreamer1.0 \
+ ${@bb.utils.contains('LICENSE_FLAGS_WHITELIST', 'commercial', 'packagegroup-fsl-gstreamer1.0-commercial', '', d)} \
+ gstreamer1.0-plugins-base-meta \
+ gstreamer1.0-plugins-good-meta \
+ gstreamer1.0-plugins-bad-meta \
+ ${@bb.utils.contains('DISTRO_FEATURES', 'wayland', 'weston-init', '', d)} \
+ ${@bb.utils.contains('DISTRO_FEATURES', 'x11 wayland', 'weston-xwayland xterm', '', d)} \
+"
