@@ -1207,3 +1207,12 @@ vi sources/poky/meta/recipes-graphics/mini-x-session/files/mini-x-session
 vi sources/poky/meta/recipes-core/base-files/base-files/profile
 vi sources/meta-fsl-arm/recipes-graphics/xorg-xserver/xserver-xf86-config/mx6/xorg.conf
 
+git access token 04e8333b5d9e183c11d781d4c3546fd4c8d1bff2
+
+LVDS Separate mode
+https://community.nxp.com/t5/i-MX-Processors/Two-LVDS-channels-in-separate-mode-on-i-MX6Q-running-Linux-v3-14/m-p/436927
+
+code value converter:
+https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
+/unit_tests/memtool -32 0x020e0008 1    (LDB_CTRL)
+/unit_tests/memtool -32 0x020e000c 1    (IOMUXC_GPR3, LVDSx_MUX_CTL)

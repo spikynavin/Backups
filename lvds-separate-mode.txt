@@ -1,0 +1,174 @@
+This are the setup which is used to make separate mode in lvds
+========================================================
+
+Kernel command line:
+console=ttymxc0,115200 lpj=30000 root=/dev/mmcblk1p2 rootfstype=ext4 rootwait rw quiet silent=1 psplash=false maxcpus=1 consoleblank=0 vt.global_cursor_default=0 video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666 video=mxcfb3:dev=ldb,LDB-XGA,if=RGB666 video=mxcfb1:off video=mxcfb2:off fec.macaddr=0x96,0x75,0x99,0xea,0x19,0x26
+
+vi arch/arm/boot/dts/imx6qdl-sabresd.dtsi
+
+mxcfb1: fb@0 {
+                compatible = "fsl,mxc_sdc_fb";
+                disp_dev = "ldb";
+                interface_pix_fmt = "RGB666";
+                default_bpp = <16>;
+                int_clk = <0>;
+                late_init = <0>;
+                status = "okay";
+        };
+
+mxcfb4: fb@3 {
+                compatible = "fsl,mxc_sdc_fb";
+                disp_dev = "ldb";
+                interface_pix_fmt = "RGB666";
+                default_bpp = <16>;
+                int_clk = <0>;
+                late_init = <0>;
+                status = "okay";
+        };
+
+
+/*&dcic1 {
+        dcic_id = <0>;
+        dcic_mux = "dcic-hdmi";
+        status = "disabled";
+};*/
+
+&dcic1 {
+        dcic_id = <0>;
+        dcic_mux = "dcic-lvds0";
+        status = "okay";
+};
+
+&dcic2 {
+        dcic_id = <1>;
+        dcic_mux = "dcic-lvds1";
+        status = "okay";
+};
+
+&ldb {
+        status = "okay";
+
+        lvds-channel@0 {
+                fsl,data-mapping = "spwg";
+                fsl,data-width = <18>;
+                crtc = "ipu1-di0";
+                ipu_id = <0>;
+                disp_id = <0>;
+                status = "okay";
+
+                display-timings {
+                        native-mode = <&timing0>;
+                        timing0: hsd100pxn1 {
+                                clock-frequency = <65000000>;
+                                hactive = <1024>;
+                                vactive = <768>;
+                                hback-porch = <220>;
+                                hfront-porch = <40>;
+                                vback-porch = <21>;
+                                vfront-porch = <7>;
+                                hsync-len = <60>;
+                                vsync-len = <10>;
+                        };
+                };
+        };
+
+lvds-channel@1 {
+                fsl,data-mapping = "spwg";
+                fsl,data-width = <18>;
+                primary;
+                crtc = "ipu1-di1";
+                ipu_id = <0>;
+                disp_id = <1>;
+                status = "okay";
+
+                display-timings {
+                        native-mode = <&timing1>;
+                        timing1: hsd100pxn1 {
+                                clock-frequency = <65000000>;
+                                hactive = <1024>;
+                                vactive = <768>;
+                                hback-porch = <220>;
+                                hfront-porch = <40>;
+                                vback-porch = <21>;
+                                vfront-porch = <7>;
+                                hsync-len = <60>;
+                                vsync-len = <10>;
+                        };
+                };
+        };
+};
+
+vi arch/arm/boot/dts/imx6dl-sabresd.dts
+
+&ldb {
+        lvds-channel@0 {
+                crtc = "ipu1-di0";
+        };
+
+        lvds-channel@1 {
+                crtc = "ipu1-di1";
+        };
+};
+
+&mxcfb1 {
+        status = "okay";
+};
+
+/*&mxcfb2 {
+        status = "okay";
+};*/
+
+&mxcfb4 {
+        status = "okay";
+};
+
+This are in rootfs setup:
+================================================
+
+vi /etc/X11/xorg.conf
+
+Section "Device"
+    Identifier  "i.MX Accelerated Framebuffer Device"
+    Driver      "vivante" /* Native standard nxp gpu driver support only one framebuffer */
+    Option      "fbdev"     "/dev/fb2" /* use what ever framebuffer as mainconsole */
+    Option      "vivante_fbdev" "/dev/fb2" /* /dev/fb0 */
+    Option      "HWcursor"  "false"
+    Option      "mode_settings" "false"
+EndSection
+
+Section "ServerFlags"
+    Option "BlankTime"  "0"
+    Option "StandbyTime"  "0"
+    Option "SuspendTime"  "0"
+    Option "OffTime"  "0"
+EndSection
+
+This is for dual display separate mode working
+=================================================
+vi /etc/X11/xorg.conf
+
+Section "Device"
+    Identifier  "Framebuffer Device1"
+    Driver      "vivante"
+    Option      "fbdev"     "/dev/fb0"
+    Option      "vivante_fbdev" "/dev/fb0"
+    Option      "HWcursor"  "false"
+    Option      "mode_settings" "false"
+EndSection
+
+Section "Device"
+    Identifier  "Framebuffer Device2"
+    Driver      "fbdev"
+    Option      "fbdev"         "/dev/fb2"
+    Option      "HWcursor"      "false"
+    Option      "mode_settings" "false"
+EndSection
+
+Section "ServerFlags"
+    Option "BlankTime"  "0"
+    Option "StandbyTime"  "0"
+    Option "SuspendTime"  "0"
+    Option "OffTime"  "0"
+EndSection
+
+
