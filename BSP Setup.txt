@@ -207,7 +207,7 @@ aliases {
                 gpio6 = &gpio7;
                 i2c0 = &i2c1;
                 i2c1 = &i2c2;
-                i2c2 = &i2c3;
+                i2c2 = &;
                 ipu0 = &ipu1;
                 mmc0 = &usdhc1;
                 mmc1 = &usdhc2;
@@ -643,7 +643,6 @@ hannstar_cabc {
         lvds1 {
                  gpios = <&gpio1 21 GPIO_ACTIVE_HIGH>;
         };
-
         };
 
 34 Runtime scripts for cluster startup
@@ -757,7 +756,7 @@ vi arch/arm/boot/dts/imx6qdl-iwg15m-q7.dtsi
                 fsl,data-mapping = "spwg";
                 fsl,data-width = <24>;
                 primary;
-                crtc = "ipu2-di0";
+                crtc = "ipu1-di0";
                 status = "okay";
 
                 display-timings {
@@ -786,7 +785,7 @@ used in the pmic ldobypadd dts if needed
 &ldb {
         lvds-channel@0 {
 
-                crtc = "ipu2-di0";
+                crtc = "ipu1-di0";
 
         };
 
@@ -811,7 +810,7 @@ vi arch/arm/boot/dts/imx6qd-iwg15m-q7_ldoactive.dts
 
                 display-timings {
                         native-mode = <&timing1>;
-                        timing1: ldb-svga {
+                        timing1: ldb-wvga {
                                 /*clock-frequency = <40000000>;
                                 hactive = <800>;
                                 vactive = <600>;
@@ -1196,6 +1195,7 @@ vi ../sources/meta-fsl-arm/conf/machine/include/imx6sabresd-common.inc /* This i
 vi ../sources/meta-fsl-arm/conf/machine/include/imx-base.inc /* This is for the imx base
 vi ../sources/meta-fsl-arm/conf/machine/include/fsl-default-providers.inc /* This is for the default providers
 vi ../sources/meta-fsl-bsp-release/imx/meta-fsl-arm/conf/layer.conf /* This are the prefered version
+vi ../sources/poky/meta/conf/machine/include/tune-cortexa9.inc
 
 To find the virtual kernel version
 $ bitbake virtual/kernel -e | grep PREFERRED_PROVIDER_virtual/kernel
@@ -1216,3 +1216,336 @@ code value converter:
 https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
 /unit_tests/memtool -32 0x020e0008 1    (LDB_CTRL)
 /unit_tests/memtool -32 0x020e000c 1    (IOMUXC_GPR3, LVDSx_MUX_CTL)
+
+Need to change name of board 
+vi /etc/hostname
+
+Make uboot scr script
+mkimage -A arm -O linux -T script -C none -a 0 -e 0 -d imx6boot.txt imx6boot.scr
+
+imx6boot.txt source:
+
+#
+# Copyright <2017-2018> Josua Mayer <josua@solid-run.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+#############
+# functions #
+#############
+
+# load u-boot environment file $bootenv from mmc $mmcdev:$mmcpart
+setenv loadbootenv "true;
+load mmc '${mmcdev}':'${mmcpart}' '${loadaddr}' '${file_prefix}''${bootenv}';"
+# Don't load boot-script $script from mmc $mmcdev:$mmcpart
+setenv loadbootscript "false;"
+# load mmc '${mmcdev}':'${mmcpart}' '${loadaddr}' '${file_prefix}''${script}';"
+# load $bootfile from mmc $mmcdev:$mmcpart
+setenv loadbootfile "true;
+load mmc '${mmcdev}':'${mmcpart}' '${loadaddr}' '${file_prefix}''${bootfile}';"
+# load fdt blob
+setenv loadfdt "true;
+if test '${boottype}' = mmc; then
+        load mmc '${mmcdev}':'${mmcpart}' '${fdt_addr}' '${file_prefix}'/'${fdt_file}';
+else
+        '${get_cmd}' '${fdt_addr}' '${fdt_file}';
+fi;"
+# load ramdisk image
+setenv loadramdisk "true;
+if test '${boottype}' = mmc; then
+        load mmc '${mmcdev}':'${mmcpart}' '${ramdisk_addr}' '${file_prefix}'/'${ramdisk_file}';
+else
+        '${get_cmd}' '${ramdisk_addr}' '${ramdisk_file}';
+fi;"
+# figure out filename of devicetree blob
+setenv autodetectfdt "true;
+run findfdt;
+setenv fdt_file '${fdtfile}'";
+# execute previously loaded boot-script
+setenv bootscript "true;
+echo Running bootscript from mmc ...;
+source;"
+# import previously loaded u-boot environment
+setenv importbootenv "true;
+echo Importing environment from mmc'${mmcdev}' ...;
+env import -t '${loadaddr}' '${filesize}';"
+# boot from network
+setenv netboot "true;
+echo Booting from net ...;
+run netargs;
+setenv boottype net;
+if test '${ip_dyn}' = yes; then
+        setenv get_cmd dhcp;
+else
+        setenv get_cmd tftp;
+fi;
+if test '${bootfile}' = auto; then
+        setenv bootfile zImage
+        if '${get_cmd}' '${bootfile}'; then
+                run bootit;
+        else
+                setenv bootfile uImage;
+        fi;
+fi;
+'${get_cmd}' '${bootfile}';
+run bootit;"
+# generate bootargs for booting from network
+setenv netargs "true;
+setenv bootargs console='${console}','${baudrate}' root=/dev/nfs ip=dhcp nfsroot='${serverip}':'${nfsroot}',v3,tcp;"
+# boot from mmc
+setenv mmcboot "true;
+echo Booting from mmc ...;
+run mmcargs;
+setenv boottype mmc;
+run bootit;"
+# generate bootargs for booting from mmc
+setenv mmcargs "true;
+setenv bootargs quiet console='${console}','${baudrate}' root='${mmcroot}';"
+# set up ramdisk and fdt
+setenv bootit "true;
+setenv boot_file '${bootfile}';
+setenv fdt_addr_bak '${fdt_addr}';
+if test -n '${ramdisk_file}'; then
+        if run loadramdisk; then
+                echo Loaded '${ramdisk_file}';
+        else
+                setenv ramdisk_addr -;
+        fi;
+else
+        setenv ramdisk_addr -;
+fi;
+if test '${boot_file}' = zImage; then
+        if test '${boot_fdt}' = yes || test '${boot_fdt}' = try; then
+                if run loadfdt; then
+                        echo Loaded '${fdt_file}';
+                else
+                        setenv fdt_addr;
+                        if test '${boot_fdt}' = try; then
+                                echo WARN: Cannot load the DTB, and boot file is type zImage;
+                                echo if you have not appended a dtb to the file it may;
+                                echo hang after displaying Starting kernel...;
+                                echo;
+                        else
+                                echo WARN: Cannot load the DT;
+                        fi;
+                fi;
+        else
+                setenv fdt_addr;
+        fi;
+else
+        setenv fdt_addr;
+fi;
+run autoboot;"
+# call start kernel
+setenv autoboot "true;
+echo Booting '${boot_file}';
+if test '${boot_file}' = zImage; then
+        bootz '${loadaddr}' '${ramdisk_addr}' '${fdt_addr}';
+else
+        bootm '${loadaddr}' '${ramdisk_addr}' '${fdt_addr}';
+fi;"
+
+####################
+# default settings #
+####################
+
+setenv loadaddr ${kernel_addr_r}
+setenv fdt_addr ${fdt_addr_r}
+setenv ramdisk_addr ${ramdisk_addr_r}
+setenv fdt_high 0xffffffff
+setenv initrd_high 0xffffffff
+setenv console ttymxc0
+setenv baudrate 115200
+setenv mmcdev 0
+setenv mmcpart 1
+setenv mmcroot /dev/mmcblk0p2 rootwait rw
+setenv boot_prefixes / /boot/
+setenv bootfile auto
+# setenv ramdisk_file initrd.img
+setenv boot_fdt try
+setenv bootenv uEnv.txt
+setenv script boot.scr
+# setenv serverip 10.0.0.1 # enable to boot from network
+setenv ip_dyn yes
+
+########
+# Boot #
+########
+
+mmc dev ${mmcdev}
+if mmc rescan; then
+        for prefix in ${boot_prefixes}; do
+                setenv file_prefix ${prefix}
+                if run loadbootscript; then
+                        run bootscript
+                else
+                        run autodetectfdt
+                        if run loadbootenv; then
+                                run importbootenv
+                        fi
+                        if test -n ${serverip}; then
+                                run netboot
+                        fi
+                        if test ${bootfile} = auto; then
+                                setenv origbootfile auto
+                                setenv bootfile zImage
+                                if run loadbootfile; then
+                                        run mmcboot
+                                else
+                                        setenv bootfile uImage
+                                fi
+                        fi
+                        if run loadbootfile; then
+                                run mmcboot
+                        else
+                                setenv bootfile ${origbootfile}
+                        fi
+                fi
+        done
+fi
+run netboot
+
+Display a png file in framebuffer;
+Yocto recipe fbida
+fbi -d /dev/fb0 -T 1 source file.png
+
+PWM Frequency allocating;
+/* 1 / (5000000 / 1000000000) = 200 Hz */
+
+Framebuffer test:
+export FRAMEBUFFER=/dev/fb2
+fbtest
+
+Complete BSP Setup steps:
+https://www.variscite.com/product/system-on-module-som/cortex-a9/var-som-solo-cpu-nxp-imx6/#block_diagram
+
+Linux custom logo pushed in yocto setup:
+====================================================================
+SRC_URI_append = " file://logo_linux_clut224.ppm"
+
+do_configure_prepend() {
+    # logo support, if you supply logo_linux_clut224.ppm in SRC_URI, then it's going to be used
+    if [ -e ${WORKDIR}/logo_linux_clut224.ppm ]; then
+        install -m 0644 ${WORKDIR}/logo_linux_clut224.ppm ${S}/drivers/video/logo/logo_linux_clut224.ppm
+        kernel_conf_variable LOGO y
+        kernel_conf_variable LOGO_LINUX_CLUT224 y
+        kernel_conf_variable LOGO_VARISCITE_CLUT224 n
+    fi
+}
+
+IMX6 Register read/write in runtime 
+How to read from register :
+
+To read one or more registers, use devregs with a single parameter that’s either an address or a register name.
+
+
+
+Ex : $  devregs 0x73f88000
+
+:0x73f88000    =0x803dffaf
+
+
+
+If a register address matches a register in /etc/devregs.dat, you’ll see the register name:
+
+
+
+Ex : $ devregs 0x73f88000
+
+GPIO2_DR:0x73f88000    =0x803dffaf
+
+
+
+If used with a register name, any bitfields defined will be shown:
+
+
+
+Ex: devregs UART1_UFCR
+
+UART1_UFCR: 0x73fc0090   =0x0801
+
+UART1_UFCR:0x73fc0090    =0x0801
+
+      TXTL                      10-15     =0x2
+
+      RFDIV                    7 - 9      =0x0
+
+      DCEDTE                 6 - 6     = 0x0
+
+      RXTL                       0 - 5     = 0x1
+
+How to write to register :
+
+Ex : $ devregs GPIO2_GDIR
+
+GPIO2_GDIR:0x73f88004    =0x0002c0a4
+
+Ex: $ devregs GPIO2_GDIR 0x2c0a0
+
+GPIO2_GDIR:0x73f88004    =0x0002c0a4
+
+GPIO2_GDIR:0x73f88004 == 0x0002c0a4...0x0002c0a0
+
+Ex: $ devregs GPIO2_GDIR
+
+GPIO2_GDIR:0x73f88004    =0x0002c0a0
+
+SPI Interface setup & enabled in linux kernel:
+
+examples:-
+&ecspi4 {
+        fsl,spi-num-chipselects = <1>; /* 3 = Maximum chip selection */
+        cs-gpios = <&gpio3 20 0> <&gpio4 19 0>; /* &gpio4 19 0 */
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_ecspi4>;
+        status = "okay";
+
+        chip1: spidev@0 {
+                compatible = "spidev"; /* devname */
+                spi-max-frequency = <20000000>;
+                reg = <0>; /* 0,1,2,3 register number */
+        };
+};
+
+pinctrl_ecspi4: ecspi4grp {
+                        fsl,pins = <
+                                MX6QDL_PAD_EIM_D22__ECSPI4_MISO         0x100b1
+                                MX6QDL_PAD_EIM_D28__ECSPI4_MOSI         0x100b1
+                                MX6QDL_PAD_EIM_D21__ECSPI4_SCLK         0x100b1
+                                MX6QDL_PAD_EIM_D20__ECSPI4_SS0          0x100b1
+								MX6QDL_PAD_EIM_A25__ECSPI4_SS1			0x100b1
+								MX6QDL_PAD_EIM_D24__ECSPI4_SS2			0x100b1
+								MX6QDL_PAD_EIM_D25__ECSPI4_SS3			0x100b1
+                        >;
+                };
+
+Simple character drivers:
+https://olegkutkov.me/2018/03/14/simple-linux-character-device-driver/
+
+
+CRANK SETUP IN LINUX YOCTO BSP
+https://support.cranksoftware.com/hc/en-us/articles/360045250652-Getting-Storyboard-Running-without-X11
+
+Backup the git source with .git
+$ git clone --mirror yourrepo backup.repo
+$ tar cjf backup.repo.tar.bz2 backup.repo
+$ tar xjf backup.repo.tar.bz2
+$ git clone backup.repo yourrepo
+
