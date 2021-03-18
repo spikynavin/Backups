@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) 2014-2015 iWave Systems Technologies Pvt. Ltd. 
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+/dts-v1/;
+
+#include "imx6q_iwg15.dtsi"
+#include "imx6qdl-iwg15m-q7.dtsi"
+
+/ {
+	model = "iWave RainboW-G15M-Q7 Board based on Freescale i.MX6 Quad/Dual";
+	compatible = "iw,qd_iwg15m_q7", "fsl,imx6q";
+};
+
+/*&mxcfb3 {
+	status = "okay";
+};
+
+&mxcfb4 {
+	status = "okay";
+};*/
+
+&mxcfb1 {
+        status = "okay";
+};
+
+&mxcfb2 {
+	status = "okay";
+};
+
+&sata {
+	sata-act-gpios = <&gpio4 10 1>;
+	status = "okay";
+};
+
+&v4l2_cap_1 {
+        ipu_id = <1>;
+};
+
+&iomuxc {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_hog_q7_2>;
+};
+
+&flexcan2 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_flexcan2_1>;
+        trx-en-gpio = <&gpio5 8 1>;
+        status = "okay";
+};
+
+&gpc {
+        fsl,ldo-bypass = <0>; /* use ldo-bypass, u-boot will check it and configure */
+};
+
+&ldb {
+	lvds-channel@1 {
+		fsl,data-mapping = "spwg";
+		fsl,data-width = <24>;/*18*/
+		crtc = "ipu2-di1";
+		status = "okay";
+
+		display-timings {
+			native-mode = <&timing1>;
+			timing1: ldb-wvga {
+				 clock-frequency = <178900000>;/*89400000*//*148500000*/
+                                hactive = <1920>;
+                                vactive = <720>;
+                                hback-porch = <656>;/*96*/
+                                hfront-porch = <120>;/*30*/
+                                vback-porch = <35>;/*3*/
+                                vfront-porch = <1>;/*3*/
+                                hsync-len = <2>;
+                                vsync-len = <2>;
+			};
+		};
+	};
+};
+
+&unused_gpios {
+	gpios = <&gpio1 2 0   &gpio1 3 0   &gpio1 4 0   &gpio1 5 0
+		&gpio1 6 0   &gpio1 8 0   &gpio1 25 0  &gpio1 26 0
+		&gpio1 27 0  &gpio1 28 0  &gpio1 29    &gpio1 30 0
+		&gpio2 23 0  &gpio2 26 0  &gpio2 28 0  &gpio2 29 0
+		&gpio3 0 0   &gpio3 1 0   &gpio3 2 0   &gpio3 3 0
+		&gpio3 4 0   &gpio3 5 0   &gpio3 6 0   &gpio3 7 0
+		&gpio3 8 0   &gpio3 9 0   &gpio3 10 0  &gpio3 11 0  
+		&gpio3 12 0  &gpio3 13 0  &gpio3 14 0  &gpio3 15 0  
+		&gpio3 22 0  &gpio4 5 0   &gpio4 6 0   &gpio4 7 0
+		&gpio4 8 0   &gpio4 9 0   &gpio4 16 0  &gpio4 17 0
+		&gpio4 18 0  &gpio4 19 0  &gpio4 20 0  &gpio4 21 0  
+		&gpio4 22 0  &gpio4 24 0  &gpio4 25 0  &gpio4 26 0  
+		&gpio4 27 0  &gpio4 28 0  &gpio4 29 0  &gpio4 30 0  
+		&gpio4 31 0  &gpio5 0 0   &gpio5 9 0   &gpio5 10 0  
+		&gpio5 11 0  &gpio5 12 0  &gpio5 13 0  &gpio5 14 0  
+		&gpio5 15 0  &gpio5 16 0  &gpio5 17 0  &gpio5 18 0  
+		&gpio5 19 0  &gpio5 20 0  &gpio5 21 0  &gpio5 22 0  
+		&gpio5 23 0  &gpio5 24 0  &gpio5 25 0  &gpio5 30 0  
+		&gpio5 31 0  &gpio6 0 0   &gpio6 1 0   &gpio6 2 0   
+		&gpio6 3 0   &gpio6 4 0   &gpio6 5 0   &gpio6 15 0  
+		&gpio6 31 0  &gpio7 11 0  &gpio7 12 0  &gpio7 13 0  >;
+};
+

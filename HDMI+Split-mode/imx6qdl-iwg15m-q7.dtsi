@@ -1,0 +1,442 @@
+/*
+ * Copyright (c) 2014-2015 iWave Systems Technologies Pvt. Ltd.
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+#include <dt-bindings/input/input.h>
+
+/ {
+	aliases {
+		mxcfb0 = &mxcfb1;
+		mxcfb1 = &mxcfb2;
+		mxcfb2 = &mxcfb3;
+		mxcfb3 = &mxcfb4;
+	};
+
+	memory {
+		reg = <0x10000000 0x40000000>;
+	};
+
+	sound {
+		compatible = "fsl,imx-audio-rt5610","fsl,imx6q";
+		model = "iwg15m-rt5610";
+		cpu-dai = <&ssi2>;
+		audio-codec = <&codec>;
+		audio-routing =
+			"MIC_IN", "Mic Jack",
+			"Mic Jack", "Mic Bias",
+			"Headphone Jack", "HP_OUT";
+		mux-int-port = <2>;
+		mux-ext-port = <4>;
+		hp-det-gpios = <&gpio5 5 1>;
+		mic-det-gpios = <&gpio5 7 1>;
+	};
+
+	codec: codec {
+	       compatible = "fsl,audio-rt5610";
+	       status = "okay";
+        };
+
+	sound-hdmi {
+		compatible = "fsl,imx6q-audio-hdmi",
+			     "fsl,imx-audio-hdmi";
+		model = "imx-audio-hdmi";
+		hdmi-controller = <&hdmi_audio>;
+	};
+
+	mxcfb1: fb@0 {
+		compatible = "fsl,mxc_sdc_fb";
+		disp_dev = "ldb";
+		interface_pix_fmt = "RGB24"; /*RGB666*/
+		default_bpp = <24>;/*16*/
+		int_clk = <0>;
+		late_init = <0>;
+		status = "disabled";/*disabled*/
+	};
+
+	mxcfb2: fb@1 {
+		compatible = "fsl,mxc_sdc_fb";
+		disp_dev = "hdmi";
+		interface_pix_fmt = "RGB24";
+		mode_str ="1920x1080M@60";
+		default_bpp = <24>;
+		int_clk = <0>;
+		late_init = <0>;
+		status = "disabled";
+	};
+
+	mxcfb3: fb@2 {
+		compatible = "fsl,mxc_sdc_fb";
+		disp_dev = "ldb";
+		interface_pix_fmt = "RGB24";/*RGB666*/
+		default_bpp = <24>;/*16*/
+		int_clk = <0>;
+		late_init = <0>;
+		status = "disabled";/*disabled*/
+	};
+
+	mxcfb4: fb@3 {
+		compatible = "fsl,mxc_sdc_fb";
+		disp_dev = "lcd";
+		interface_pix_fmt = "RGB666";
+		mode_str ="LCD-WVGA";
+		default_bpp = <24>;
+		int_clk = <0>;
+		late_init = <0>;
+		status = "disabled";
+	};
+
+	backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm2 0 5000000>;
+		brightness-levels = <0 4 8 16 32 64 128 255>;
+		default-brightness-level = <7>;
+		status = "okay";
+	};
+
+	v4l2_cap_0 {
+		compatible = "fsl,imx6q-v4l2-capture";
+		ipu_id = <0>;
+		csi_id = <0>;
+		mclk_source = <0>;
+		status = "disabled";/*okay*/
+	};
+
+	v4l2_cap_1: v4l2_cap_1 {
+		compatible = "fsl,imx6q-v4l2-capture";
+		csi_id = <1>;
+		mclk_source = <0>;
+		status = "disabled";/*okay*/
+	};
+
+	v4l2_out {
+		compatible = "fsl,mxc_v4l2_output";
+		status = "disabled";/*okay*/
+	};
+
+	unused_gpios: unused_gpios {
+		compatible = "iwave,unused-gpios";
+		status = "okay";
+	};
+
+	lvds_qseven {
+		compatible = "iwave,lvds-qseven";
+		backlgt-gpios = <&gpio2 5 1>;
+		poweron-gpios = <&gpio2 4 1>;
+		status = "okay";
+	};
+
+	iwg15_q7_common {
+		compatible = "iwave,g15-q7-com";
+		reset-gpios = <&gpio1 11 1>;
+		som-rev-gpios = <&gpio5 9 0  &gpio4 29 0  &gpio4 21 0  &gpio1 27 0
+			&gpio1 26 0
+			>;
+		status = "okay";
+	};
+};
+
+&ecspi1 {
+	fsl,spi-num-chipselects = <1>;
+	cs-gpios = <&gpio2 30 0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi1_1 &pinctrl_ecspi1_cs_1>;
+	status = "okay";
+
+	flash: m25p80@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "st,m25p32";
+		spi-max-frequency = <20000000>;
+		reg = <0>;
+	};
+};
+
+&ecspi2 {
+	fsl,spi-num-chipselects = <2>;
+	cs-gpios = <&gpio2 27 0>, <&gpio5 29 0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi2_1 &pinctrl_ecspi2_cs_1>;
+	status = "okay";
+};
+
+&fec {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet_1>;
+	phy-mode = "rgmii";
+	fsl,magic-packet;
+	status = "okay";
+};
+
+&gpc {
+	fsl,ldo-bypass = <1>; /* use ldo-bypass, u-boot will check it and configure */
+	fsl,wdog-reset = <1>; /* watchdog select of reset source */
+};
+
+&wdog1 {
+	status = "okay";
+};
+
+&wdog2 {
+	status = "disabled";
+};
+
+&hdmi_audio {
+	status = "disabled";/*okay*/
+};
+
+&hdmi_cec {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hdmi_cec_1>;
+	status = "okay";
+};
+
+&hdmi_core {
+	ipu_id = <0>;
+	disp_id = <1>;/*1*/
+	status = "okay";
+};
+
+&hdmi_video {
+	fsl,phy_reg_vlev = <0x0294>;
+	fsl,phy_reg_cksymtx = <0x800d>;
+	digi,dvi_mode; /*For VGA Adapter*/
+	status = "okay";
+};
+
+&mxcfb1 {
+        status = "okay";
+};
+
+&mxcfb2 {
+        status = "okay";
+};
+
+&i2c1 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c1_1>;
+	status = "okay";
+
+	ov7725: ov7725@21 {
+		compatible = "ov7725";
+		reg = <0x21>;
+		pinctrl-names = "default";
+	 	pinctrl-0 = <&pinctrl_csi1_1>; 
+		clocks = <&clks 201>;
+		clock-names = "csi_mclk";
+		csi_id = <1>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+
+	ft5x06@38 {
+		compatible = "focal,ft5x06";
+		reg = <0x38>;
+		interrupt-parent = <&gpio4>;
+		interrupts = <23 2>;
+		int-gpio = <&gpio4 23 1>;
+	};
+
+	ov5640_mipi: ov5640_mipi@3c { 
+		compatible = "ovti,ov5640_mipi";
+		reg = <0x3c>;
+		clocks = <&clks 201>;
+		clock-names = "csi_mclk";
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+
+};
+
+&i2c2 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c2_1>;
+	status = "okay";
+
+	mag3110@0e {
+		compatible = "fsl,mag3110";
+		reg = <0x0e>;
+		position = <2>;
+	};
+
+	mma8451@1c {
+		compatible = "fsl,mma8451";
+		reg = <0x1c>;
+		position = <1>;
+	};
+
+	isl29023@44 {
+		compatible = "fsl,isl29023";
+		reg = <0x44>;
+		rext = <499>;
+	};
+
+	hdmi: edid@50 {
+		compatible = "fsl,imx6-hdmi-i2c";
+		reg = <0x50>;
+	};
+
+	mpl3315@60 {
+		compatible = "mpl3115";
+		reg = <0x60>;
+	};
+};
+
+&dcic1 {
+	dcic_id = <0>;
+	dcic_mux = "dcic-hdmi";
+	status = "okay";
+};
+
+&dcic2 {
+	dcic_id = <1>;
+	dcic_mux = "dcic-lvds0";/*dcic-lvds1*/
+	status = "okay";
+};
+
+&ldb {
+	split-mode;
+	status = "okay";
+
+	lvds-channel@0 {
+		fsl,data-mapping = "spwg";
+		fsl,data-width = <24>;/*18*/
+		crtc = "ipu2-di0";
+		primary;
+		status = "okay";
+
+		display-timings {
+			native-mode = <&timing0>;
+			timing0: ldb-wvga {
+				clock-frequency = <178900000>;/*89400000*//*148500000*/
+                                hactive = <1920>;
+                                vactive = <720>;
+                                hback-porch = <656>;/*96*/
+                                hfront-porch = <120>;/*30*/
+                                vback-porch = <35>;/*3*/
+                                vfront-porch = <1>;/*3*/
+                                hsync-len = <2>;
+                                vsync-len = <2>;
+			};
+		};
+	};
+
+};
+
+&mipi_csi {
+	status = "disabled"; /*okay*/
+	ipu_id = <0>;
+	csi_id = <0>;
+	v_channel = <0>;
+	lanes = <2>;
+};
+
+&pcie {
+	wake-up-gpio = <&gpio2 6 0>;
+	reset-gpio = <&gpio2 7 0>;
+	status = "okay";
+};
+
+&pwm2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm2_1>;
+	status = "okay";
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1_1>;
+	fsl,uart-has-rtscts;
+	status = "okay";
+};
+
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart2_1>;
+	status = "okay";
+};
+
+&uart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart3_1>;
+	fsl,uart-has-rtscts;
+	status = "okay";
+};
+
+&uart4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart4_1>;
+	status = "disabled";
+};
+
+&usbh1 {
+	status = "okay";
+};
+
+&usbotg {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usbotg_1>;
+	disable-over-current;
+	status = "okay";
+};
+
+&usdhc1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc1_1>;
+	bus-width = <8>;
+	cd-gpios = <&gpio7 0 0>;
+	wp-gpios = <&gpio6 11 0>;
+	led-gpios = <&gpio6 7 0>;
+	pwr-gpios = <&gpio6 14 0>;
+	no-1-8-v;
+	keep-power-in-suspend;
+	enable-sdio-wakeup;
+	status = "okay";
+};
+
+&usdhc3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc3_1>;
+	cd-gpios = <&gpio7 1 0>;
+	no-1-8-v;
+	keep-power-in-suspend;
+	enable-sdio-wakeup;
+	status = "okay";
+};
+
+&usdhc4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc4_1>;
+	bus-width = <8>;
+	non-removable;
+	no-1-8-v;
+	keep-power-in-suspend;
+	status = "okay";
+};
+
+&audmux {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_audmux_1>;
+	status = "okay";
+};
+
+&ssi2 {
+	fsl,mode = "ac97-slave";
+	status = "okay";
+};
+
+&flexcan1 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_flexcan1_1>;
+        trx-en-gpio = <&gpio5 6 1>;
+        status = "okay";
+};
