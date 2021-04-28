@@ -1,0 +1,7 @@
+#KERNEL=="sd*", ATTRS{vendor}=="*", ATTRS{model}=="*", ATTRS{serial}=="*", RUN+="/usr/local/bin/test.sh"
+#KERNEL=="sd*", ACTION=="add", "SUBSYSTEM=="usb", ATTRS{model}=="My Book 1140    ", ATTRS{serial}=="0841752394756103457194857249", RUN+="/usr/local/bin/test.sh"
+#ACTION=="add", "SUBSYSTEM=="usb", RUN+="/usr/local/bin/test.sh"
+#KERNEL=="sd*", ACTION=={add}, RUN+="/usr/local/bin/test.sh"
+KERNEL=="sd*", RUN+="/usr/local/bin/test.sh"
+KERNEL=="*", RUN+="/usr/local/bin/test.sh"
+SUBSYSTEM=="block", ACTION=="add", RUN+="/bin/touch /tmp/my_udev_rule_matched_OK"
