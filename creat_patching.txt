@@ -1,0 +1,2 @@
+1. Creat Patching in linux:
+diff -Naur a/ b/ > example.patch

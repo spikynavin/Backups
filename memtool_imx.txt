@@ -1,0 +1,8 @@
+1. Memtool in linux:
+
+tool		bit	reg-address	r	REG_VARIABLE
+/unit_tests/memtool -32 0x020e0008 1    (LDB_CTRL)
+/unit_tests/memtool -32 0x020e000c 1    (IOMUXC_GPR3, LVDSx_MUX_CTL)
+
+code value converter:
+https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html

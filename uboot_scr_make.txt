@@ -1,0 +1,2 @@
+Make uboot scr script
+mkimage -A arm -O linux -T script -C none -a 0 -e 0 -d imx6boot.txt imx6boot.scr

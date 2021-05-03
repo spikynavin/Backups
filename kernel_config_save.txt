@@ -1,0 +1,2 @@
+Kernel configuration save & backup:
+make a changes in defconfig and execute make savedefconfig.

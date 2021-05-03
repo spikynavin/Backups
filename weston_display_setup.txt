@@ -1,0 +1,4 @@
+Weston Display setup:
+
+define bpp=16,32 (24 bit not working)
+weston --tty=1 --use-gal2d=1 --use-gl=0 --device=/dev/fb0,/dev/fb2 &

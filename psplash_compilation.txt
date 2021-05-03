@@ -1,0 +1,15 @@
+1. Psplash build stand alone steps:
+
+$ git clone https://git.yoctoproject.org/git/psplash
+$ cd psplash
+$ autoreconf --install
+$ source (toolchain_path for cross compilation if needed)
+$ ./configure --host=arm (for cross compilation for arm)
+$ make
+
+run script for converting image to hex code
+$./make-image-header.sh <logo_pic.png ,jpg> POKY
+
+or make change with the help of psplash script and replace the header file in yocto build
+
+vi ../sources/poky/meta-yocto/recipes-core/psplash/files/psplash-poky-img.h 

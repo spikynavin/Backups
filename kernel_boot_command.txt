@@ -1,0 +1,2 @@
+Kernel Boot Commands:  
+CONFIG_CMDLINE="console=ttymxc0,115200 lpj=30000 root=/dev/mmcblk1p2 rootfstype=ext4 rootwait rw psplash=false maxcpus=1 consoleblank=0 vt.global_cursor_default=0 video=mxcfb0:dev=ldb,if=RGB666 video=mxcfb1:off video=mxcfb2:off fec.macaddr=0x96,0x75,0x99,0xea,0x19,0x26"

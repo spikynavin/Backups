@@ -1,0 +1,12 @@
+This are things need to change to move from defaut kernel version to other
+==========================================================================
+vi ../sources/meta-fsl-arm/conf/machine/include/imx6sabresd-common.inc /* This is for the base
+vi ../sources/meta-fsl-arm/conf/machine/include/imx-base.inc /* This is for the imx base
+vi ../sources/meta-fsl-arm/conf/machine/include/fsl-default-providers.inc /* This is for the default providers
+vi ../sources/meta-fsl-bsp-release/imx/meta-fsl-arm/conf/layer.conf /* This are the prefered version
+vi ../sources/poky/meta/conf/machine/include/tune-cortexa9.inc
+
+To find the virtual kernel version
+$ bitbake virtual/kernel -e | grep PREFERRED_PROVIDER_virtual/kernel
+$ bitbake -c menuconfig virtual/kernel
+$ bitbake -c savedefconfig virtual/kernel

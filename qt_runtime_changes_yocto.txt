@@ -1,0 +1,5 @@
+Yocto Qt Application runtime changes
+
+vi sources/poky/meta/recipes-graphics/mini-x-session/files/mini-x-session
+vi sources/poky/meta/recipes-core/base-files/base-files/profile
+vi sources/meta-fsl-arm/recipes-graphics/xorg-xserver/xserver-xf86-config/mx6/xorg.conf

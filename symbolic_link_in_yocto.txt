@@ -1,0 +1,8 @@
+1. Case for creating a symbloic link in rootfs
+
+eg:
+my_image_postprocess_function() {
+    ln -sf /usr/lib/python3.5/pdb.py ${IMAGE_ROOTFS}/usr/bin/pdb
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "my_image_postprocess_function; "

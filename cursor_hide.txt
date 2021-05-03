@@ -1,0 +1,4 @@
+1. Cursor Pointer Hiding in yocto
+
+vi /etc/X11/xserver-common
+Pass this argiments to hide pointer ARGS=" -br -pn -nocursor"
