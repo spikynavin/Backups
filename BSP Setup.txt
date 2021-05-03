@@ -1549,3 +1549,78 @@ $ tar cjf backup.repo.tar.bz2 backup.repo
 $ tar xjf backup.repo.tar.bz2
 $ git clone backup.repo yourrepo
 
+Parallel RGB Interface
+=====================================
+mxcfb3: fb@2 {
+compatible = "fsl,mxc_sdc_fb";
+disp_dev = "lcd";
+interface_pix_fmt = "RGB24";
+mode_str ="EA7-WVGA";
+default_bpp = <32>;
+int_clk = <0>;
+late_init = <0>;
+dispctrl-gpios = <&gpio6 31 GPIO_ACTIVE_HIGH>, <&gpio5 0
+GPIO_ACTIVE_HIGH>;
+status = "disabled";
+};
+
+lcd: lcd@0 {
+compatible = "fsl,lcd";
+ipu_id = <0>;
+disp_id = <0>;
+default_ifmt = "RGB24";
+pinctrl-names = "default";
+pinctrl-0 = <&pinctrl_ipu1>;
+status = "okay";
+};
+
+&lcd {
+status = "okay";
+display = <&display0>;
+display0: display {
+bits-per-pixel = <32>;
+bus-width = <24>;
+display-timings {
+native-mode = <&t_lcd>;
+t_lcd: t_lcd_default {
+clock-frequency = <33500000>;
+hactive = <800>;
+vactive = <480>;
+hback-porch = <89>;
+hfront-porch = <164>;
+vback-porch = <75>;
+vfront-porch = <75>;
+hsync-len = <10>;
+vsync-len = <10>;
+hsync-active = <0>;
+vsync-active = <0>;
+de-active = <1>;
+pixelclk-active = <1>;
+};
+};
+};
+};
+
+=========================================
+Weston Display setup:
+
+define bpp=16,32 (24 bit not working)
+weston --tty=1 --use-gal2d=1 --use-gl=0 --device=/dev/fb0,/dev/fb2 &
+
+boot args:
+
+setenv hdmi 'video=mxcfb1:dev=hdmi,1920x1080M@30,if=RGB24,bpp=32'
+setenv lcd 'video=mxcfb0:dev=ldb,1920x720M@30,if=RGB24,bpp=32'
+echo 0 > /sys/class/graphics/fb2/blank (Activate second display)
+
+Autorun
+For USB Patching:
+ACTION=="add",KERNEL=="sd*", SUBSYSTEMS=="usb", ATTRS{product}=="Mass Storage", RUN+="/usr/share/scripts/usbautorun.sh"
+For SDCARD Patching:
+ACTION=="add", SUBSYSTEMS=="block", RUN+="/usr/share/scripts/mmcautorun.sh"
+
+udevadm info -q all -n /dev/sda1 to show devices information
+
+udev rules:
+http://reactivated.net/writing_udev_rules.html
+https://blog.jasonantman.com/2009/11/running-a-script-on-usb-drive-insertion/
