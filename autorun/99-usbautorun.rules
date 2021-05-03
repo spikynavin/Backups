@@ -1,0 +1,1 @@
+ACTION=="add",KERNEL=="sd*", SUBSYSTEMS=="usb", ATTRS{product}=="Mass Storage", RUN+="/usr/share/scripts/usbautorun.sh"

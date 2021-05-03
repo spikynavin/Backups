@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEMS=="block", RUN+="/usr/share/scripts/mmcautorun.sh"
