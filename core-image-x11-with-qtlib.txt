@@ -1,0 +1,21 @@
+SUMMARY = "A very basic X11 image with a terminal"
+
+IMAGE_FEATURES += "splash package-management x11-base ssh-server-dropbear"
+
+LICENSE = "MIT"
+
+image_strip() {
+        mkdir -p ${IMAGE_ROOTFS}/media/sdcard
+        mkdir -p ${IMAGE_ROOTFS}/media/thumbdrive
+        mkdir -p ${IMAGE_ROOTFS}/kernel
+        rm -rf ${IMAGE_ROOTFS}/boot/*
+        rm -rf ${IMAGE_ROOTFS}/install
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "image_strip;"
+
+inherit core-image distro_features_check
+
+REQUIRED_DISTRO_FEATURES = "x11"
+
+IMAGE_INSTALL += "packagegroup-qt5-core packagegroup-qt5-qtdeclarative packagegroup-qt5-qtdeclarative-qml qtbase qtquick1 qtx11extras qtxmlpatterns"
