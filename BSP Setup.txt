@@ -1623,4 +1623,54 @@ udevadm info -q all -n /dev/sda1 to show devices information
 
 udev rules:
 http://reactivated.net/writing_udev_rules.html
-https://blog.jasonantman.com/2009/11/running-a-script-on-usb-drive-insertion/
+
+find kernel version in yocto:
+bitbake virtual/kernel -e | grep PREFERRED_PROVIDER_virtual/kernel
+
+changing kernel version in yocto by add the following line in the below file
+vi sources/meta-fsl-arm/conf/machine/include/imx-base.inc
+PREFERRED_PROVIDER_virtual/kernel_mx6 = "linux-iris" /*linux-imx,linux-fslc*/
+
+================================================================================
+How to use USB mass storage in U-Boot
+This page explains how to use the U-Boot command "ums" to update an SD card or eMMC on the device.
+
+1 ums command↑
+In U-Boot, you can directly export the available block devices (sd/mmc/usb) as USB mass storage devices with ums command:
+
+ Board $> help ums
+ ums - Use the UMS [USB Mass Storage]
+ 
+ Usage:
+ ums <USB_controller> [<devtype>] <dev[:part]>  e.g. ums 0 mmc 0
+     devtype defaults to mmc
+This U-Boot command "ums" is infinite (a loop in USB treatments), and the U-Boot console is blocked until user enters a Ctrl-C.
+
+2 Exporting a block device↑
+On ST boards, the OTG USB controller device index is 0, SD card = "mmc 0" and, when available, eMMC = "mmc 1".
+You can check the device connected on an SDMMC with the U-Boot command "mmc info".
+
+You can also export a USB device connected to the USB host controller (USBH) = "usb 0".
+
+Then execute one of the following commands:
+
+                                Comments
+ Board $> ums 0 mmc 0 --> start ums on SD card
+ Ctrl-C
+                                Comments
+ Board $> ums 0 mmc 1 --> start ums on eMMC
+ Ctrl-C
+                                Comments
+ Board $> usb start   --> start USB host controller
+ Board $> ums 0 usb 0 --> start ums on USB device 0 (USB key for example)
+ Ctrl-C
+ Board $> usb stop    --> stop USB host controller
+After a delay (of up to 15 seconds), the host sees the exported block device and you can use any command on the PC to access the partitions of the exported memory (dd, mount, cp, rsync). A Ctrl-C is needed to stop the command.
+
+See also How to manually update bootloaders.
+
+//NOR BOOT MEDIA SETUP
+BT_CFG1_4 1 SW5 EIM_DA4
+BT_CFG1_5 1 SW6 EIM_DA5
+BT_CFG1_6 0 SW7 EIM_DA6
+BT_CFG1_7 0 SW8 EIM_DA7
