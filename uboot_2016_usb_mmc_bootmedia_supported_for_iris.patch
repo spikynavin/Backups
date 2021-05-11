@@ -1,0 +1,1403 @@
+/* uboot 2016 for kernel 4.1.5_2_ga releases for iris dev board
+* date 11/05/2021
+* naveenraj.sivasamy@pricol.co.in
+*/
+diff -Naur a/arch/arm/imx-common/cpu.c b/arch/arm/imx-common/cpu.c
+--- a/arch/arm/imx-common/cpu.c	2021-05-11 14:30:07.558893571 +0530
++++ b/arch/arm/imx-common/cpu.c	2021-05-11 09:58:26.663190529 +0530
+@@ -295,9 +295,9 @@
+ 	disable_sata_clock();
+ #endif
+ #endif
+-#if defined(CONFIG_LDO_BYPASS_CHECK)
++/*#if defined(CONFIG_LDO_BYPASS_CHECK)
+ 	ldo_mode_set(check_ldo_bypass());
+-#endif
++#endif*/
+ #if defined(CONFIG_VIDEO_IPUV3)
+ 	/* disable video before launching O/S */
+ 	ipuv3_fb_shutdown();
+diff -Naur a/board/freescale/mx6qsabreauto/mx6qsabreauto.c b/board/freescale/mx6qsabreauto/mx6qsabreauto.c
+--- a/board/freescale/mx6qsabreauto/mx6qsabreauto.c	2021-05-11 14:30:08.066893562 +0530
++++ b/board/freescale/mx6qsabreauto/mx6qsabreauto.c	2021-05-11 10:35:04.543150490 +0530
+@@ -20,27 +20,8 @@
+ #include <asm/imx-common/spi.h>
+ #include <mmc.h>
+ #include <fsl_esdhc.h>
+-#include <miiphy.h>
+-#include <netdev.h>
+ #include <asm/arch/sys_proto.h>
+-#include <i2c.h>
+-#include <asm/arch/mxc_hdmi.h>
+-#include <asm/imx-common/video.h>
+ #include <asm/arch/crm_regs.h>
+-#include <pca953x.h>
+-#include <power/pmic.h>
+-#include <power/pfuze100_pmic.h>
+-#include "../common/pfuze.h"
+-
+-#ifdef CONFIG_CMD_SATA
+-#include <asm/imx-common/sata.h>
+-#endif
+-#ifdef CONFIG_FSL_FASTBOOT
+-#include <fsl_fastboot.h>
+-#ifdef CONFIG_ANDROID_RECOVERY
+-#include <recovery.h>
+-#endif
+-#endif /*CONFIG_FSL_FASTBOOT*/
+ 
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+@@ -52,39 +33,14 @@
+ 	PAD_CTL_SPEED_LOW | PAD_CTL_DSE_80ohm |			\
+ 	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+ 
+-/*Need more drive strength for SD1 slot on base board*/
+-#define USDHC1_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |            \
+-	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |               \
+-	PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+-
+-#define ENET_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
+-	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
+-
+-#define I2C_PAD_CTRL	(PAD_CTL_PUS_100K_UP |			\
+-	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |	\
+-	PAD_CTL_ODE | PAD_CTL_SRE_FAST)
+-
+-#define GPMI_PAD_CTRL0 (PAD_CTL_PKE | PAD_CTL_PUE | PAD_CTL_PUS_100K_UP)
+-#define GPMI_PAD_CTRL1 (PAD_CTL_DSE_40ohm | PAD_CTL_SPEED_MED | \
+-			PAD_CTL_SRE_FAST)
+-#define GPMI_PAD_CTRL2 (GPMI_PAD_CTRL0 | GPMI_PAD_CTRL1)
+-
+-#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
+-
+ #define SPI_PAD_CTRL (PAD_CTL_HYS |				\
+ 	PAD_CTL_PUS_100K_DOWN | PAD_CTL_SPEED_MED |		\
+ 	PAD_CTL_DSE_40ohm     | PAD_CTL_SRE_FAST)
+ 
+-#define WEIM_NOR_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |          \
+-	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |               \
+-	PAD_CTL_DSE_40ohm   | PAD_CTL_SRE_FAST)
+-
+ #define OTG_ID_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |		\
+ 	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
+ 	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+ 
+-#define I2C_PMIC	1
+-
+ int dram_init(void)
+ {
+ 	gd->ram_size = get_ram_size((void *)PHYS_SDRAM, PHYS_SDRAM_SIZE);
+@@ -92,226 +48,33 @@
+ 	return 0;
+ }
+ 
+-static iomux_v3_cfg_t const uart4_pads[] = {
+-	MX6_PAD_KEY_COL0__UART4_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
+-	MX6_PAD_KEY_ROW0__UART4_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
+-};
+-
+-static iomux_v3_cfg_t const enet_pads[] = {
+-	MX6_PAD_KEY_COL1__ENET_MDIO		| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_KEY_COL2__ENET_MDC		| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_TXC__RGMII_TXC	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_TD0__RGMII_TD0	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_TD1__RGMII_TD1	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_TD2__RGMII_TD2	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_TD3__RGMII_TD3	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_TX_CTL__RGMII_TX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_ENET_REF_CLK__ENET_TX_CLK	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_RXC__RGMII_RXC	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_RD0__RGMII_RD0	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_RD1__RGMII_RD1	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_RD2__RGMII_RD2	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_RD3__RGMII_RD3	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_RGMII_RX_CTL__RGMII_RX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-	MX6_PAD_GPIO_16__ENET_REF_CLK		| MUX_PAD_CTRL(ENET_PAD_CTRL),
+-};
+-
+-/* I2C2 PMIC, iPod, Tuner, Codec, Touch, HDMI EDID, MIPI CSI2 card */
+-static struct i2c_pads_info i2c_pad_info1 = {
+-	.scl = {
+-		.i2c_mode = MX6_PAD_EIM_EB2__I2C2_SCL | PC,
+-		.gpio_mode = MX6_PAD_EIM_EB2__GPIO2_IO30 | PC,
+-		.gp = IMX_GPIO_NR(2, 30)
+-	},
+-	.sda = {
+-		.i2c_mode = MX6_PAD_KEY_ROW3__I2C2_SDA | PC,
+-		.gpio_mode = MX6_PAD_KEY_ROW3__GPIO4_IO13 | PC,
+-		.gp = IMX_GPIO_NR(4, 13)
+-	}
+-};
+-
+-#ifndef CONFIG_SYS_FLASH_CFI
+-/*
+- * I2C3 MLB, Port Expanders (A, B, C), Video ADC, Light Sensor,
+- * Compass Sensor, Accelerometer, Res Touch
+- */
+-static struct i2c_pads_info i2c_pad_info2 = {
+-	.scl = {
+-		.i2c_mode = MX6_PAD_GPIO_3__I2C3_SCL | PC,
+-		.gpio_mode = MX6_PAD_GPIO_3__GPIO1_IO03 | PC,
+-		.gp = IMX_GPIO_NR(1, 3)
+-	},
+-	.sda = {
+-		.i2c_mode = MX6_PAD_EIM_D18__I2C3_SDA | PC,
+-		.gpio_mode = MX6_PAD_EIM_D18__GPIO3_IO18 | PC,
+-		.gp = IMX_GPIO_NR(3, 18)
+-	}
+-};
+-#endif
+-
+-static iomux_v3_cfg_t const i2c3_pads[] = {
+-	MX6_PAD_EIM_A24__GPIO5_IO04		| MUX_PAD_CTRL(NO_PAD_CTRL),
+-};
+-
+-static iomux_v3_cfg_t const port_exp[] = {
+-	MX6_PAD_SD2_DAT0__GPIO1_IO15		| MUX_PAD_CTRL(NO_PAD_CTRL),
+-};
+-
+-/*Define for building port exp gpio, pin starts from 0*/
+-#define PORTEXP_IO_NR(chip, pin) \
+-	((chip << 5) + pin)
+-
+-/*Get the chip addr from a ioexp gpio*/
+-#define PORTEXP_IO_TO_CHIP(gpio_nr) \
+-	(gpio_nr >> 5)
+-
+-/*Get the pin number from a ioexp gpio*/
+-#define PORTEXP_IO_TO_PIN(gpio_nr) \
+-	(gpio_nr & 0x1f)
+-
+-static int port_exp_direction_output(unsigned gpio, int value)
+-{
+-	int ret;
+-
+-	i2c_set_bus_num(2);
+-	ret = i2c_probe(PORTEXP_IO_TO_CHIP(gpio));
+-	if (ret)
+-		return ret;
+-
+-	ret = pca953x_set_dir(PORTEXP_IO_TO_CHIP(gpio),
+-		(1 << PORTEXP_IO_TO_PIN(gpio)),
+-		(PCA953X_DIR_OUT << PORTEXP_IO_TO_PIN(gpio)));
+-
+-	if (ret)
+-		return ret;
+-
+-	ret = pca953x_set_val(PORTEXP_IO_TO_CHIP(gpio),
+-		(1 << PORTEXP_IO_TO_PIN(gpio)),
+-		(value << PORTEXP_IO_TO_PIN(gpio)));
+-
+-	if (ret)
+-		return ret;
+-
+-	return 0;
+-}
+-
+-#ifdef CONFIG_SYS_USE_EIMNOR
+-static iomux_v3_cfg_t const eimnor_pads[] = {
+-	MX6_PAD_EIM_D16__EIM_DATA16	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D17__EIM_DATA17	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D18__EIM_DATA18	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D19__EIM_DATA19	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D20__EIM_DATA20	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D21__EIM_DATA21	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D22__EIM_DATA22	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D23__EIM_DATA23	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D24__EIM_DATA24	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D25__EIM_DATA25	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D26__EIM_DATA26	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D27__EIM_DATA27	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D28__EIM_DATA28	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D29__EIM_DATA29	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D30__EIM_DATA30	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_D31__EIM_DATA31	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA0__EIM_AD00	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA1__EIM_AD01	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA2__EIM_AD02	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA3__EIM_AD03	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA4__EIM_AD04	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA5__EIM_AD05	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA6__EIM_AD06	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA7__EIM_AD07	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA8__EIM_AD08	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA9__EIM_AD09	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA10__EIM_AD10	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA11__EIM_AD11	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL) ,
+-	MX6_PAD_EIM_DA12__EIM_AD12	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA13__EIM_AD13	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA14__EIM_AD14	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_DA15__EIM_AD15	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A16__EIM_ADDR16	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A17__EIM_ADDR17	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A18__EIM_ADDR18	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A19__EIM_ADDR19	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A20__EIM_ADDR20	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A21__EIM_ADDR21	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A22__EIM_ADDR22	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_A23__EIM_ADDR23	| MUX_PAD_CTRL(WEIM_NOR_PAD_CTRL),
+-	MX6_PAD_EIM_OE__EIM_OE_B	| MUX_PAD_CTRL(NO_PAD_CTRL),
+-	MX6_PAD_EIM_RW__EIM_RW		| MUX_PAD_CTRL(NO_PAD_CTRL),
+-	MX6_PAD_EIM_CS0__EIM_CS0_B	| MUX_PAD_CTRL(NO_PAD_CTRL),
+-};
+-
+-static void eimnor_cs_setup(void)
+-{
+-	struct weim *weim_regs = (struct weim *)WEIM_BASE_ADDR;
+-
+-	writel(0x00020181, &weim_regs->cs0gcr1);
+-	writel(0x00000001, &weim_regs->cs0gcr2);
+-	writel(0x0a020000, &weim_regs->cs0rcr1);
+-	writel(0x0000c000, &weim_regs->cs0rcr2);
+-	writel(0x0804a240, &weim_regs->cs0wcr1);
+-	writel(0x00000120, &weim_regs->wcr);
+-
+-	set_chipselect_size(CS0_128);
+-}
+-
+-static void setup_iomux_eimnor(void)
+-{
+-	imx_iomux_v3_setup_multiple_pads(eimnor_pads, ARRAY_SIZE(eimnor_pads));
+-
+-	gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
+-
+-	eimnor_cs_setup();
+-}
+-#endif
+-
+-static void setup_iomux_enet(void)
+-{
+-	imx_iomux_v3_setup_multiple_pads(enet_pads, ARRAY_SIZE(enet_pads));
+-}
+-
+-static iomux_v3_cfg_t const usdhc1_pads[] = {
+-	/*To avoid pin conflict with NAND, set usdhc1 to 4 pins*/
+-	MX6_PAD_SD1_CLK__SD1_CLK	| MUX_PAD_CTRL(USDHC1_PAD_CTRL),
+-	MX6_PAD_SD1_CMD__SD1_CMD	| MUX_PAD_CTRL(USDHC1_PAD_CTRL),
+-	MX6_PAD_SD1_DAT0__SD1_DATA0	| MUX_PAD_CTRL(USDHC1_PAD_CTRL),
+-	MX6_PAD_SD1_DAT1__SD1_DATA1	| MUX_PAD_CTRL(USDHC1_PAD_CTRL),
+-	MX6_PAD_SD1_DAT2__SD1_DATA2	| MUX_PAD_CTRL(USDHC1_PAD_CTRL),
+-	MX6_PAD_SD1_DAT3__SD1_DATA3	| MUX_PAD_CTRL(USDHC1_PAD_CTRL),
+-
+-	/*CD pin*/
+-	MX6_PAD_GPIO_1__GPIO1_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),
+-};
+-
+-static iomux_v3_cfg_t const usdhc3_pads[] = {
+-	MX6_PAD_SD3_CLK__SD3_CLK	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_CMD__SD3_CMD	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT0__SD3_DATA0	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT1__SD3_DATA1	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT2__SD3_DATA2	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT3__SD3_DATA3	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT4__SD3_DATA4	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT5__SD3_DATA5	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT6__SD3_DATA6	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_SD3_DAT7__SD3_DATA7	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_GPIO_18__SD3_VSELECT | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+-	MX6_PAD_NANDF_CS2__GPIO6_IO15   | MUX_PAD_CTRL(NO_PAD_CTRL),
++static iomux_v3_cfg_t const uart1_pads[] = {
++	MX6_PAD_SD3_DAT7__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
++	MX6_PAD_SD3_DAT6__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
++};
++
++static iomux_v3_cfg_t const usdhc4_pads[] = {
++	MX6_PAD_SD4_CLK__SD4_CLK	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_CMD__SD4_CMD	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT0__SD4_DATA0	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT1__SD4_DATA1	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT2__SD4_DATA2	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT3__SD4_DATA3	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT4__SD4_DATA4	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT5__SD4_DATA5	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT6__SD4_DATA6	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
++	MX6_PAD_SD4_DAT7__SD4_DATA7	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
+ };
+ 
+ static void setup_iomux_uart(void)
+ {
+-	imx_iomux_v3_setup_multiple_pads(uart4_pads, ARRAY_SIZE(uart4_pads));
++	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
+ }
+ 
+ #ifdef CONFIG_FSL_ESDHC
+ 
+-#define USDHC1_CD_GPIO	IMX_GPIO_NR(1, 1)
+-#define USDHC3_CD_GPIO	IMX_GPIO_NR(6, 15)
+-
+-static struct fsl_esdhc_cfg usdhc_cfg[2] = {
+-	{USDHC1_BASE_ADDR, 0, 4},
+-	{USDHC3_BASE_ADDR},
++static struct fsl_esdhc_cfg usdhc_cfg[1] = {
++	{USDHC4_BASE_ADDR},
+ };
+ 
+ int board_mmc_get_env_dev(int devno)
+@@ -329,7 +92,7 @@
+ int mmc_map_to_kernel_blk(int devno)
+ {
+ 	if (devno == 1)
+-		devno = 2;
++		devno = 0;
+ 
+ 	return devno;
+ }
+@@ -340,13 +103,8 @@
+ 	int ret = 0;
+ 
+ 	switch (cfg->esdhc_base) {
+-	case USDHC1_BASE_ADDR:
+-		gpio_direction_input(USDHC1_CD_GPIO);
+-		ret = !gpio_get_value(USDHC1_CD_GPIO);
+-		break;
+-	case USDHC3_BASE_ADDR:
+-		gpio_direction_input(USDHC3_CD_GPIO);
+-		ret = !gpio_get_value(USDHC3_CD_GPIO);
++	case USDHC4_BASE_ADDR:
++		ret = 1;
+ 		break;
+ 	}
+ 
+@@ -367,15 +125,8 @@
+ 		switch (i) {
+ 		case 0:
+ 			imx_iomux_v3_setup_multiple_pads(
+-				usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
+-			gpio_direction_input(USDHC1_CD_GPIO);
+-			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
+-			break;
+-		case 1:
+-			imx_iomux_v3_setup_multiple_pads(
+-				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
+-			gpio_direction_input(USDHC3_CD_GPIO);
+-			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
++				usdhc4_pads, ARRAY_SIZE(usdhc4_pads));
++			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
+ 			break;
+ 		default:
+ 			printf("Warning: you configured more USDHC controllers"
+@@ -391,100 +142,6 @@
+ }
+ #endif
+ 
+-#ifdef CONFIG_NAND_MXS
+-static iomux_v3_cfg_t gpmi_pads[] = {
+-	MX6_PAD_NANDF_CLE__NAND_CLE		| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_ALE__NAND_ALE		| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_WP_B__NAND_WP_B	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_RB0__NAND_READY_B	| MUX_PAD_CTRL(GPMI_PAD_CTRL0),
+-	MX6_PAD_NANDF_CS0__NAND_CE0_B	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_SD4_CMD__NAND_RE_B		| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_SD4_CLK__NAND_WE_B		| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D0__NAND_DATA00	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D1__NAND_DATA01	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D2__NAND_DATA02	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D3__NAND_DATA03	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D4__NAND_DATA04	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D5__NAND_DATA05	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D6__NAND_DATA06	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_NANDF_D7__NAND_DATA07	| MUX_PAD_CTRL(GPMI_PAD_CTRL2),
+-	MX6_PAD_SD4_DAT0__NAND_DQS		| MUX_PAD_CTRL(GPMI_PAD_CTRL1),
+-};
+-
+-static void setup_gpmi_nand(void)
+-{
+-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+-
+-	/* config gpmi nand iomux */
+-	imx_iomux_v3_setup_multiple_pads(gpmi_pads, ARRAY_SIZE(gpmi_pads));
+-
+-	setup_gpmi_io_clk((MXC_CCM_CS2CDR_ENFC_CLK_PODF(0) |
+-			MXC_CCM_CS2CDR_ENFC_CLK_PRED(3) |
+-			MXC_CCM_CS2CDR_ENFC_CLK_SEL(3)));
+-
+-	/* enable apbh clock gating */
+-	setbits_le32(&mxc_ccm->CCGR0, MXC_CCM_CCGR0_APBHDMA_MASK);
+-}
+-#endif
+-
+-int mx6_rgmii_rework(struct phy_device *phydev)
+-{
+-	unsigned short val;
+-
+-	/* To enable AR8031 ouput a 125MHz clk from CLK_25M */
+-	phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x7);
+-	phy_write(phydev, MDIO_DEVAD_NONE, 0xe, 0x8016);
+-	phy_write(phydev, MDIO_DEVAD_NONE, 0xd, 0x4007);
+-
+-	val = phy_read(phydev, MDIO_DEVAD_NONE, 0xe);
+-	val &= 0xffe3;
+-	val |= 0x18;
+-	phy_write(phydev, MDIO_DEVAD_NONE, 0xe, val);
+-
+-	/* introduce tx clock delay */
+-	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x5);
+-	val = phy_read(phydev, MDIO_DEVAD_NONE, 0x1e);
+-	val |= 0x0100;
+-	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, val);
+-
+-	return 0;
+-}
+-
+-int board_phy_config(struct phy_device *phydev)
+-{
+-	mx6_rgmii_rework(phydev);
+-
+-	if (phydev->drv->config)
+-		phydev->drv->config(phydev);
+-
+-	return 0;
+-}
+-
+-static void setup_fec(void)
+-{
+-	int ret;
+-
+-	if (is_mx6dqp()) {
+-		/*
+-		 * select ENET MAC0 TX clock from PLL
+-		 */
+-		imx_iomux_set_gpr_register(5, 9, 1, 1);
+-	} else {
+-		imx_iomux_set_gpr_register(1, 21, 1, 1);
+-	}
+-
+-	ret = enable_fec_anatop_clock(0, ENET_125MHZ);
+-	if (ret)
+-		printf("Error fec anatop clock settings!\n");
+-}
+-
+-int board_eth_init(bd_t *bis)
+-{
+-	setup_iomux_enet();
+-
+-	return cpu_eth_init(bis);
+-}
+-
+ #define BOARD_REV_B  0x200
+ #define BOARD_REV_A  0x100
+ 
+@@ -522,131 +179,6 @@
+ 	return (get_cpu_rev() & ~(0xF << 8)) | rev;
+ }
+ 
+-#if defined(CONFIG_VIDEO_IPUV3)
+-static void disable_lvds(struct display_info_t const *dev)
+-{
+-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+-
+-	clrbits_le32(&iomux->gpr[2],
+-		     IOMUXC_GPR2_LVDS_CH0_MODE_MASK |
+-		     IOMUXC_GPR2_LVDS_CH1_MODE_MASK);
+-}
+-
+-static void do_enable_hdmi(struct display_info_t const *dev)
+-{
+-	disable_lvds(dev);
+-	imx_enable_hdmi_phy();
+-}
+-
+-struct display_info_t const displays[] = {{
+-	.bus	= -1,
+-	.addr	= 0,
+-	.pixfmt	= IPU_PIX_FMT_RGB666,
+-	.detect	= NULL,
+-	.enable	= NULL,
+-	.mode	= {
+-		.name           = "Hannstar-XGA",
+-		.refresh        = 60,
+-		.xres           = 1024,
+-		.yres           = 768,
+-		.pixclock       = 15385,
+-		.left_margin    = 220,
+-		.right_margin   = 40,
+-		.upper_margin   = 21,
+-		.lower_margin   = 7,
+-		.hsync_len      = 60,
+-		.vsync_len      = 10,
+-		.sync           = FB_SYNC_EXT,
+-		.vmode          = FB_VMODE_NONINTERLACED
+-} }, {
+-	.bus	= -1,
+-	.addr	= 0,
+-	.pixfmt	= IPU_PIX_FMT_RGB24,
+-	.detect	= NULL,
+-	.enable	= do_enable_hdmi,
+-	.mode	= {
+-		.name           = "HDMI",
+-		.refresh        = 60,
+-		.xres           = 640,
+-		.yres           = 480,
+-		.pixclock       = 39721,
+-		.left_margin    = 48,
+-		.right_margin   = 16,
+-		.upper_margin   = 33,
+-		.lower_margin   = 10,
+-		.hsync_len      = 96,
+-		.vsync_len      = 2,
+-		.sync           = 0,
+-		.vmode          = FB_VMODE_NONINTERLACED,
+-} } };
+-size_t display_count = ARRAY_SIZE(displays);
+-
+-iomux_v3_cfg_t const backlight_pads[] = {
+-	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(ENET_PAD_CTRL),
+-};
+-
+-static void setup_iomux_backlight(void)
+-{
+-	gpio_direction_output(IMX_GPIO_NR(2, 9), 1);
+-	imx_iomux_v3_setup_multiple_pads(backlight_pads,
+-					 ARRAY_SIZE(backlight_pads));
+-}
+-
+-static void setup_display(void)
+-{
+-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+-	int reg;
+-
+-	setup_iomux_backlight();
+-	enable_ipu_clock();
+-	imx_setup_hdmi();
+-
+-	/* Turn on LDB_DI0 and LDB_DI1 clocks */
+-	reg = readl(&mxc_ccm->CCGR3);
+-	reg |= MXC_CCM_CCGR3_LDB_DI0_MASK | MXC_CCM_CCGR3_LDB_DI1_MASK;
+-	writel(reg, &mxc_ccm->CCGR3);
+-
+-	/* Set LDB_DI0 and LDB_DI1 clk select to 3b'011 */
+-	reg = readl(&mxc_ccm->cs2cdr);
+-	reg &= ~(MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_MASK |
+-		 MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK);
+-	reg |= (3 << MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_OFFSET) |
+-	       (3 << MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET);
+-	writel(reg, &mxc_ccm->cs2cdr);
+-
+-	reg = readl(&mxc_ccm->cscmr2);
+-	reg |= MXC_CCM_CSCMR2_LDB_DI0_IPU_DIV | MXC_CCM_CSCMR2_LDB_DI1_IPU_DIV;
+-	writel(reg, &mxc_ccm->cscmr2);
+-
+-	reg = readl(&mxc_ccm->chsccdr);
+-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0
+-		<< MXC_CCM_CHSCCDR_IPU1_DI0_CLK_SEL_OFFSET);
+-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0 <<
+-		MXC_CCM_CHSCCDR_IPU1_DI1_CLK_SEL_OFFSET);
+-	writel(reg, &mxc_ccm->chsccdr);
+-
+-	reg = IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW |
+-	      IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW |
+-	      IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG |
+-	      IOMUXC_GPR2_DATA_WIDTH_CH1_18BIT |
+-	      IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG |
+-	      IOMUXC_GPR2_DATA_WIDTH_CH0_18BIT |
+-	      IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0 |
+-	      IOMUXC_GPR2_LVDS_CH1_MODE_DISABLED;
+-	writel(reg, &iomux->gpr[2]);
+-
+-	reg = readl(&iomux->gpr[3]);
+-	reg &= ~(IOMUXC_GPR3_LVDS0_MUX_CTL_MASK |
+-		 IOMUXC_GPR3_HDMI_MUX_CTL_MASK);
+-	reg |= (IOMUXC_GPR3_MUX_SRC_IPU1_DI0 <<
+-		IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET) |
+-	       (IOMUXC_GPR3_MUX_SRC_IPU1_DI0 <<
+-		IOMUXC_GPR3_HDMI_MUX_CTL_OFFSET);
+-	writel(reg, &iomux->gpr[3]);
+-}
+-#endif /* CONFIG_VIDEO_IPUV3 */
+-
+ /*
+  * Do not overwrite the console
+  * Use always serial for U-Boot console
+@@ -662,15 +194,12 @@
+ 	MX6_PAD_EIM_D17__ECSPI1_MISO | MUX_PAD_CTRL(SPI_PAD_CTRL),
+ 	MX6_PAD_EIM_D18__ECSPI1_MOSI | MUX_PAD_CTRL(SPI_PAD_CTRL),
+ 	MX6_PAD_EIM_D19__GPIO3_IO19  | MUX_PAD_CTRL(NO_PAD_CTRL),
+-	/* Steer logic */
+-	MX6_PAD_EIM_A24__GPIO5_IO04  | MUX_PAD_CTRL(NO_PAD_CTRL),
+ };
+ 
+ void setup_spinor(void)
+ {
+ 	imx_iomux_v3_setup_multiple_pads(ecspi1_pads,
+ 					 ARRAY_SIZE(ecspi1_pads));
+-	gpio_direction_output(IMX_GPIO_NR(5, 4), 0);
+ 	gpio_direction_output(IMX_GPIO_NR(3, 19), 0);
+ }
+ 
+@@ -692,153 +221,13 @@
+ 	/* address of boot parameters */
+ 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
+ 
+-	/* I2C 2 and 3 setup - I2C 3 hw mux with EIM */
+-	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+-	/* I2C 3 Steer */
+-	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
+-	imx_iomux_v3_setup_multiple_pads(i2c3_pads, ARRAY_SIZE(i2c3_pads));
+-#ifndef CONFIG_SYS_FLASH_CFI
+-	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
+-#endif
+-	gpio_direction_output(IMX_GPIO_NR(1, 15), 1);
+-	imx_iomux_v3_setup_multiple_pads(port_exp, ARRAY_SIZE(port_exp));
+-
+-#ifdef CONFIG_VIDEO_IPUV3
+-	setup_display();
+-#endif
+-
+ #ifdef CONFIG_MXC_SPI
+ 	setup_spinor();
+ #endif
+ 
+-#ifdef CONFIG_NAND_MXS
+-	setup_gpmi_nand();
+-#endif
+-
+-#ifdef CONFIG_CMD_SATA
+-	setup_sata();
+-#endif
+-
+-#ifdef CONFIG_SYS_USE_EIMNOR
+-	setup_iomux_eimnor();
+-#endif
+-
+-#ifdef CONFIG_FEC_MXC
+-	setup_fec();
+-#endif
+-
+ 	return 0;
+ }
+ 
+-int power_init_board(void)
+-{
+-	struct pmic *pfuze;
+-	unsigned int value;
+-	int ret;
+-
+-	pfuze = pfuze_common_init(I2C_PMIC);
+-	if (!pfuze)
+-		return -ENODEV;
+-
+-	if (is_mx6dqp())
+-		ret = pfuze_mode_init(pfuze, APS_APS);
+-	else
+-		ret = pfuze_mode_init(pfuze, APS_PFM);
+-
+-	if (ret < 0)
+-		return ret;
+-
+-	if (is_mx6dqp()) {
+-		/* set SW1C staby volatage 1.075V*/
+-		pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &value);
+-		value &= ~0x3f;
+-		value |= 0x1f;
+-		pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, value);
+-
+-		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+-		pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &value);
+-		value &= ~0xc0;
+-		value |= 0x40;
+-		pmic_reg_write(pfuze, PFUZE100_SW1CCONF, value);
+-
+-		/* set SW2 staby volatage 0.975V*/
+-		pmic_reg_read(pfuze, PFUZE100_SW2STBY, &value);
+-		value &= ~0x3f;
+-		value |= 0x17;
+-		pmic_reg_write(pfuze, PFUZE100_SW2STBY, value);
+-
+-		/* set SW2/VDDARM step ramp up time to from 16us to 4us/25mV */
+-		pmic_reg_read(pfuze, PFUZE100_SW2CONF, &value);
+-		value &= ~0xc0;
+-		value |= 0x40;
+-		pmic_reg_write(pfuze, PFUZE100_SW2CONF, value);
+-	} else {
+-		/* set SW1AB staby volatage 0.975V*/
+-		pmic_reg_read(pfuze, PFUZE100_SW1ABSTBY, &value);
+-		value &= ~0x3f;
+-		value |= 0x1b;
+-		pmic_reg_write(pfuze, PFUZE100_SW1ABSTBY, value);
+-
+-		/* set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
+-		pmic_reg_read(pfuze, PFUZE100_SW1ABCONF, &value);
+-		value &= ~0xc0;
+-		value |= 0x40;
+-		pmic_reg_write(pfuze, PFUZE100_SW1ABCONF, value);
+-
+-		/* set SW1C staby volatage 0.975V*/
+-		pmic_reg_read(pfuze, PFUZE100_SW1CSTBY, &value);
+-		value &= ~0x3f;
+-		value |= 0x1b;
+-		pmic_reg_write(pfuze, PFUZE100_SW1CSTBY, value);
+-
+-		/* set SW1C/VDDSOC step ramp up time to from 16us to 4us/25mV */
+-		pmic_reg_read(pfuze, PFUZE100_SW1CCONF, &value);
+-		value &= ~0xc0;
+-		value |= 0x40;
+-		pmic_reg_write(pfuze, PFUZE100_SW1CCONF, value);
+-	}
+-
+-	return 0;
+-}
+-
+-#ifdef CONFIG_LDO_BYPASS_CHECK
+-void ldo_mode_set(int ldo_bypass)
+-{
+-	unsigned int value;
+-	struct pmic *p = pmic_get("PFUZE100");
+-
+-	if (!p) {
+-		printf("No PMIC found!\n");
+-		return;
+-	}
+-
+-	/* increase VDDARM/VDDSOC to support 1.2G chip */
+-	if (check_1_2G()) {
+-		ldo_bypass = 0;	/* ldo_enable on 1.2G chip */
+-		printf("1.2G chip, increase VDDARM_IN/VDDSOC_IN\n");
+-
+-		if (is_mx6dqp()) {
+-			/* increase VDDARM to 1.425V */
+-			pmic_reg_read(p, PFUZE100_SW2VOL, &value);
+-			value &= ~0x3f;
+-			value |= 0x29;
+-			pmic_reg_write(p, PFUZE100_SW2VOL, value);
+-		} else {
+-			/* increase VDDARM to 1.425V */
+-			pmic_reg_read(p, PFUZE100_SW1ABVOL, &value);
+-			value &= ~0x3f;
+-			value |= 0x2d;
+-			pmic_reg_write(p, PFUZE100_SW1ABVOL, value);
+-		}
+-		/* increase VDDSOC to 1.425V */
+-		pmic_reg_read(p, PFUZE100_SW1CVOL, &value);
+-		value &= ~0x3f;
+-		value |= 0x2d;
+-		pmic_reg_write(p, PFUZE100_SW1CVOL, value);
+-	}
+-}
+-#endif
+-
+ #ifdef CONFIG_CMD_BMODE
+ static const struct boot_mode board_boot_modes[] = {
+ 	/* 4 bit bus width */
+@@ -892,11 +281,11 @@
+ }
+ 
+ #ifdef CONFIG_USB_EHCI_MX6
+-#define USB_HOST1_PWR     PORTEXP_IO_NR(0x32, 7)
+-#define USB_OTG_PWR       PORTEXP_IO_NR(0x34, 1)
++#define USB_HOST1_PWR     IMX_GPIO_NR(3, 31)
++#define USB_OTG_PWR       IMX_GPIO_NR(3, 22)
+ 
+ iomux_v3_cfg_t const usb_otg_pads[] = {
+-	MX6_PAD_ENET_RX_ER__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
++	MX6_PAD_GPIO_1__USB_OTG_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
+ };
+ 
+ int board_ehci_hcd_init(int port)
+@@ -926,15 +315,15 @@
+ 	switch (port) {
+ 	case 0:
+ 		if (on)
+-			port_exp_direction_output(USB_OTG_PWR, 1);
++			gpio_direction_output(USB_OTG_PWR, 1);
+ 		else
+-			port_exp_direction_output(USB_OTG_PWR, 0);
++			gpio_direction_output(USB_OTG_PWR, 0);
+ 		break;
+ 	case 1:
+ 		if (on)
+-			port_exp_direction_output(USB_HOST1_PWR, 1);
++			gpio_direction_output(USB_HOST1_PWR, 1);
+ 		else
+-			port_exp_direction_output(USB_HOST1_PWR, 0);
++			gpio_direction_output(USB_HOST1_PWR, 0);
+ 		break;
+ 	default:
+ 		printf("MXC USB port %d not yet supported\n", port);
+@@ -944,122 +333,3 @@
+ 	return 0;
+ }
+ #endif
+-
+-#ifdef CONFIG_FSL_FASTBOOT
+-void board_fastboot_setup(void)
+-{
+-	switch (get_boot_device()) {
+-#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
+-	case SATA_BOOT:
+-		if (!getenv("fastboot_dev"))
+-			setenv("fastboot_dev", "sata");
+-		if (!getenv("bootcmd"))
+-			setenv("bootcmd", "boota sata");
+-		break;
+-#endif /*CONFIG_FASTBOOT_STORAGE_SATA*/
+-#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+-	case SD1_BOOT:
+-	case MMC1_BOOT:
+-		if (!getenv("fastboot_dev"))
+-			setenv("fastboot_dev", "mmc0");
+-		if (!getenv("bootcmd"))
+-			setenv("bootcmd", "boota mmc0");
+-		break;
+-	case SD3_BOOT:
+-	case MMC3_BOOT:
+-		if (!getenv("fastboot_dev"))
+-			setenv("fastboot_dev", "mmc1");
+-		if (!getenv("bootcmd"))
+-			setenv("bootcmd", "boota mmc1");
+-		break;
+-#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+-	case NAND_BOOT:
+-		if (!getenv("fastboot_dev"))
+-			setenv("fastboot_dev", "nand");
+-		if (!getenv("fbparts"))
+-			setenv("fbparts", ANDROID_FASTBOOT_NAND_PARTS);
+-		if (!getenv("bootcmd"))
+-			setenv("bootcmd",
+-				"nand read ${loadaddr} ${boot_nand_offset} "
+-				"${boot_nand_size};boota ${loadaddr}");
+-		break;
+-#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+-	default:
+-		printf("unsupported boot devices\n");
+-		break;
+-	}
+-}
+-
+-#ifdef CONFIG_ANDROID_RECOVERY
+-
+-#define GPIO_VOL_DN_KEY IMX_GPIO_NR(5, 14)
+-iomux_v3_cfg_t const recovery_key_pads[] = {
+-	(MX6_PAD_DISP0_DAT20__GPIO5_IO14 | MUX_PAD_CTRL(NO_PAD_CTRL)),
+-};
+-
+-int check_recovery_cmd_file(void)
+-{
+-	int button_pressed = 0;
+-	int recovery_mode = 0;
+-
+-	recovery_mode = recovery_check_and_clean_flag();
+-
+-	/* Check Recovery Combo Button press or not. */
+-	imx_iomux_v3_setup_multiple_pads(recovery_key_pads,
+-		ARRAY_SIZE(recovery_key_pads));
+-
+-	gpio_direction_input(GPIO_VOL_DN_KEY);
+-
+-	if (gpio_get_value(GPIO_VOL_DN_KEY) == 0) { /* VOL_DN key is low assert */
+-		button_pressed = 1;
+-		printf("Recovery key pressed\n");
+-	}
+-
+-	return recovery_mode || button_pressed;
+-}
+-
+-void board_recovery_setup(void)
+-{
+-	int bootdev = get_boot_device();
+-
+-	switch (bootdev) {
+-#if defined(CONFIG_FASTBOOT_STORAGE_SATA)
+-	case SATA_BOOT:
+-		if (!getenv("bootcmd_android_recovery"))
+-			setenv("bootcmd_android_recovery", "boota sata recovery");
+-		break;
+-#endif /*CONFIG_FASTBOOT_STORAGE_SATA*/
+-#if defined(CONFIG_FASTBOOT_STORAGE_MMC)
+-	case SD1_BOOT:
+-	case MMC1_BOOT:
+-		if (!getenv("bootcmd_android_recovery"))
+-			setenv("bootcmd_android_recovery", "boota mmc0 recovery");
+-		break;
+-	case SD3_BOOT:
+-	case MMC3_BOOT:
+-		if (!getenv("bootcmd_android_recovery"))
+-			setenv("bootcmd_android_recovery", "boota mmc1 recovery");
+-		break;
+-#endif /*CONFIG_FASTBOOT_STORAGE_MMC*/
+-#if defined(CONFIG_FASTBOOT_STORAGE_NAND)
+-	case NAND_BOOT:
+-		if (!getenv("bootcmd_android_recovery"))
+-			setenv("bootcmd_android_recovery",
+-				"nand read ${loadaddr} ${recovery_nand_offset} "
+-				"${recovery_nand_size};boota ${loadaddr}");
+-		break;
+-#endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
+-	default:
+-		printf("Unsupported bootup device for recovery: dev: %d\n",
+-			bootdev);
+-		return;
+-	}
+-
+-	printf("setup env for recovery..\n");
+-	setenv("bootcmd", "run bootcmd_android_recovery");
+-}
+-#endif /*CONFIG_ANDROID_RECOVERY*/
+-
+-#endif /*CONFIG_FSL_FASTBOOT*/
+-
+diff -Naur a/configs/mx6solosabreauto_spinor_iris_defconfig b/configs/mx6solosabreauto_spinor_iris_defconfig
+--- a/configs/mx6solosabreauto_spinor_iris_defconfig	1970-01-01 05:30:00.000000000 +0530
++++ b/configs/mx6solosabreauto_spinor_iris_defconfig	2021-05-11 14:33:27.070889937 +0530
+@@ -0,0 +1,10 @@
++CONFIG_ARM=y
++CONFIG_ARCH_MX6=y
++CONFIG_TARGET_MX6QSABREAUTO=y
++# CONFIG_EXPERT is not set
++CONFIG_SYS_EXTRA_OPTIONS="IMX_CONFIG=board/freescale/mx6qsabreauto/mx6solo.cfg,MX6SOLO,SYS_NOSMP=\"nosmp\",SYS_BOOT_SPINOR"
++CONFIG_CMD_GPIO=y
++# CONFIG_CMD_NET is not set
++# CONFIG_CMD_NFS is not set
++CONFIG_NET=y
++# CONFIG_NET_TFTP_VARS is not set
+diff -Naur a/include/configs/mx6qsabreauto.h b/include/configs/mx6qsabreauto.h
+--- a/include/configs/mx6qsabreauto.h	2021-05-11 14:30:08.638893552 +0530
++++ b/include/configs/mx6qsabreauto.h	2021-05-11 10:39:17.055145890 +0530
+@@ -10,10 +10,9 @@
+ #define __MX6QSABREAUTO_CONFIG_H
+ 
+ #define CONFIG_MACH_TYPE	3529
+-#define CONFIG_MXC_UART_BASE	UART4_BASE
+-#define CONFIG_CONSOLE_DEV		"ttymxc3"
++#define CONFIG_MXC_UART_BASE	UART1_BASE
++#define CONFIG_CONSOLE_DEV		"ttymxc0"
+ #define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* SDHC3 */
+-#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
+ #ifdef CONFIG_MX6SOLO
+ #undef PHYS_SDRAM_SIZE
+ #define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
+@@ -26,30 +25,16 @@
+ #define CONFIG_USB_EHCI
+ #define CONFIG_USB_EHCI_MX6
+ #define CONFIG_USB_STORAGE
+-#define CONFIG_USB_HOST_ETHER
+-#define CONFIG_USB_ETHER_ASIX
+ #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
+ #define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
+ #define CONFIG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
+ #define CONFIG_MXC_USB_FLAGS	0
+-
+-#define CONFIG_PCA953X
+-#define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x30, 8}, {0x32, 8}, {0x34, 8} }
+ #endif
+ 
+-#define CONFIG_SYS_USE_NAND
+-
+ #include "mx6sabre_common.h"
+ 
+-#undef CONFIG_MFG_NAND_PARTITION
+-#ifdef CONFIG_SYS_BOOT_NAND
+-#define CONFIG_MFG_NAND_PARTITION "mtdparts=8000000.nor:1m(boot),-(rootfs)\\\\;gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+-#else
+-#define CONFIG_MFG_NAND_PARTITION ""
+-#endif
+-
+-#define CONFIG_SYS_FSL_USDHC_NUM	2
+-#define CONFIG_SYS_MMC_ENV_DEV		1  /* SDHC3 */
++#define CONFIG_SYS_FSL_USDHC_NUM	1
++#define CONFIG_SYS_MMC_ENV_DEV		0  /* SDHC3 */
+ #define CONFIG_SYS_MMC_ENV_PART                0       /* user partition */
+ 
+ #ifdef CONFIG_SYS_USE_SPINOR
+diff -Naur a/include/configs/mx6sabre_common.h b/include/configs/mx6sabre_common.h
+--- a/include/configs/mx6sabre_common.h	2021-05-11 14:30:08.638893552 +0530
++++ b/include/configs/mx6sabre_common.h	2021-05-11 12:48:22.019004797 +0530
+@@ -36,218 +36,54 @@
+ /* MMC Configs */
+ #define CONFIG_SYS_FSL_ESDHC_ADDR      0
+ 
+-#define CONFIG_CMD_PING
+-#define CONFIG_CMD_DHCP
+-#define CONFIG_CMD_MII
+-#define CONFIG_FEC_MXC
+-#define CONFIG_MII
+-#define IMX_FEC_BASE			ENET_BASE_ADDR
+-#define CONFIG_FEC_XCV_TYPE		RGMII
+-#define CONFIG_ETHPRIME			"FEC"
+-#define CONFIG_FEC_MXC_PHYADDR		1
+-
+-#define CONFIG_PHYLIB
+-#define CONFIG_PHY_ATHEROS
+-
+ /* Command definition */
+ #define CONFIG_CMD_BMODE
++#define CONFIG_DEFAULT_FDT_FILE		"imx6dl-sabreauto.dtb"
+ 
+-#ifdef CONFIG_SYS_BOOT_NAND
+-#define CONFIG_MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs) "
+-#else
+-#define CONFIG_MFG_NAND_PARTITION ""
+-#endif
+-
++/* MFGTool Config for Flashing */
+ #define CONFIG_MFG_ENV_SETTINGS \
+-	"mfgtool_args=setenv bootargs console=" CONFIG_CONSOLE_DEV ",115200 " \
+-		"rdinit=/linuxrc " \
+-		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+-		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+-		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+-		"g_mass_storage.iSerialNumber=\"\" "\
+-		"enable_wait_mode=off "\
+-		CONFIG_MFG_NAND_PARTITION \
+-		"\0" \
+-		"initrd_addr=0x12C00000\0" \
+-		"initrd_high=0xffffffff\0" \
+-		"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+-
+-
+-#ifdef CONFIG_SUPPORT_EMMC_BOOT
+-#define EMMC_ENV \
+-	"emmcdev=2\0" \
+-	"update_emmc_firmware=" \
+-		"if test ${ip_dyn} = yes; then " \
+-			"setenv get_cmd dhcp; " \
+-		"else " \
+-			"setenv get_cmd tftp; " \
+-		"fi; " \
+-		"if ${get_cmd} ${update_sd_firmware_filename}; then " \
+-			"if mmc dev ${emmcdev} 1; then "	\
+-				"setexpr fw_sz ${filesize} / 0x200; " \
+-				"setexpr fw_sz ${fw_sz} + 1; "	\
+-				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
+-			"fi; "	\
+-		"fi\0"
+-#else
+-#define EMMC_ENV ""
+-#endif
+-
+-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
++        "mfgtool_args=setenv bootargs console=" CONFIG_CONSOLE_DEV ",115200 " \
++                "rdinit=/linuxrc " \
++                "g_mass_storage.stall=0 g_mass_storage.removable=1 " \
++                "g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
++                "g_mass_storage.iSerialNumber=\"\" "\
++                "enable_wait_mode=off "\
++                "\0" \
++                "initrd_addr=0x12C00000\0" \
++                "initrd_high=0xffffffff\0" \
++                "bootcmd_mfg=run mfgtool_args;bootm ${loadaddr} ${initrd_addr} ${fdt_addr};\0" \
+ 
+-#if defined(CONFIG_SYS_BOOT_NAND)
+-	/*
+-	 * The dts also enables the WEIN NOR which is mtd0.
+-	 * So the partions' layout for NAND is:
+-	 *     mtd1: 16M      (uboot)
+-	 *     mtd2: 16M      (kernel)
+-	 *     mtd3: 16M      (dtb)
+-	 *     mtd4: left     (rootfs)
+-	 */
+ #define CONFIG_EXTRA_ENV_SETTINGS \
+-	CONFIG_MFG_ENV_SETTINGS \
+-	"fdt_addr=0x18000000\0" \
+-	"fdt_high=0xffffffff\0"	  \
+-	"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 ubi.mtd=5 "  \
+-		"root=ubi0:rootfs rootfstype=ubifs "		     \
+-		"mtdparts=gpmi-nand:64m(boot),16m(kernel),16m(dtb),1m(misc),-(rootfs)\0"\
+-	"bootcmd=nand read ${loadaddr} 0x4000000 0x800000;"\
+-		"nand read ${fdt_addr} 0x5000000 0x100000;"\
+-		"bootz ${loadaddr} - ${fdt_addr}\0"
+-
+-#elif defined(CONFIG_SYS_BOOT_SATA)
+-
+-#define CONFIG_EXTRA_ENV_SETTINGS \
+-		CONFIG_MFG_ENV_SETTINGS \
+-		"fdt_addr=0x18000000\0" \
+-		"fdt_high=0xffffffff\0"   \
+-		"bootargs=console=" CONFIG_CONSOLE_DEV ",115200 \0"\
+-		"bootargs_sata=setenv bootargs ${bootargs} " \
+-			"root=/dev/sda1 rootwait rw \0" \
+-		"bootcmd_sata=run bootargs_sata; sata init; " \
+-			"sata read ${loadaddr} 0x800  0x4000; " \
+-			"sata read ${fdt_addr} 0x8000 0x800; " \
+-			"bootz ${loadaddr} - ${fdt_addr} \0" \
+-		"bootcmd=run bootcmd_sata \0"
+-
+-#else
+-
+-#define CONFIG_EXTRA_ENV_SETTINGS \
+-	CONFIG_MFG_ENV_SETTINGS \
+-	"epdc_waveform=epdc_splash.bin\0" \
+-	"script=boot.scr\0" \
+-	"image=zImage\0" \
+-	"fdt_file=undefined\0" \
+-	"fdt_addr=0x18000000\0" \
+-	"boot_fdt=try\0" \
+-	"ip_dyn=yes\0" \
+-	"console=" CONFIG_CONSOLE_DEV "\0" \
+-	"dfuspi=dfu 0 sf 0:0:10000000:0\0" \
+-	"dfu_alt_info_spl=spl raw 0x400\0" \
+-	"dfu_alt_info_img=u-boot raw 0x10000\0" \
+-	"dfu_alt_info=spl raw 0x400\0" \
+-	"fdt_high=0xffffffff\0"	  \
+-	"initrd_high=0xffffffff\0" \
+-	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
+-	"mmcpart=1\0" \
+-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+-	"mmcautodetect=yes\0" \
+-	"update_sd_firmware=" \
+-		"if test ${ip_dyn} = yes; then " \
+-			"setenv get_cmd dhcp; " \
+-		"else " \
+-			"setenv get_cmd tftp; " \
+-		"fi; " \
+-		"if mmc dev ${mmcdev}; then "	\
+-			"if ${get_cmd} ${update_sd_firmware_filename}; then " \
+-				"setexpr fw_sz ${filesize} / 0x200; " \
+-				"setexpr fw_sz ${fw_sz} + 1; "	\
+-				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
+-			"fi; "	\
+-		"fi\0" \
+-	EMMC_ENV	  \
+-	"smp=" CONFIG_SYS_NOSMP "\0"\
+-	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
+-		"root=${mmcroot}\0" \
+-	"loadbootscript=" \
+-		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
+-	"bootscript=echo Running bootscript from mmc ...; " \
+-		"source\0" \
+-	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
+-	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
+-	"mmcboot=echo Booting from mmc ...; " \
+-		"run mmcargs; " \
+-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+-			"if run loadfdt; then " \
+-				"bootz ${loadaddr} - ${fdt_addr}; " \
+-			"else " \
+-				"if test ${boot_fdt} = try; then " \
+-					"bootz; " \
+-				"else " \
+-					"echo WARN: Cannot load the DT; " \
+-				"fi; " \
+-			"fi; " \
+-		"else " \
+-			"bootz; " \
+-		"fi;\0" \
+-	"netargs=setenv bootargs console=${console},${baudrate} ${smp} " \
+-		"root=/dev/nfs " \
+-		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
+-	"netboot=echo Booting from net ...; " \
+-		"run netargs; " \
+-		"if test ${ip_dyn} = yes; then " \
+-			"setenv get_cmd dhcp; " \
+-		"else " \
+-			"setenv get_cmd tftp; " \
+-		"fi; " \
+-		"${get_cmd} ${image}; " \
+-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+-			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
+-				"bootz ${loadaddr} - ${fdt_addr}; " \
+-			"else " \
+-				"if test ${boot_fdt} = try; then " \
+-					"bootz; " \
+-				"else " \
+-					"echo WARN: Cannot load the DT; " \
+-				"fi; " \
+-			"fi; " \
+-		"else " \
+-			"bootz; " \
+-		"fi;\0" \
+-		"findfdt="\
+-			"if test $fdt_file = undefined; then " \
+-				"if test $board_name = SABREAUTO && test $board_rev = MX6QP; then " \
+-					"setenv fdt_file imx6qp-sabreauto.dtb; fi; " \
+-				"if test $board_name = SABREAUTO && test $board_rev = MX6Q; then " \
+-					"setenv fdt_file imx6q-sabreauto.dtb; fi; " \
+-				"if test $board_name = SABREAUTO && test $board_rev = MX6DL; then " \
+-					"setenv fdt_file imx6dl-sabreauto.dtb; fi; " \
+-				"if test $board_name = SABRESD && test $board_rev = MX6QP; then " \
+-					"setenv fdt_file imx6qp-sabresd.dtb; fi; " \
+-				"if test $board_name = SABRESD && test $board_rev = MX6Q; then " \
+-					"setenv fdt_file imx6q-sabresd.dtb; fi; " \
+-				"if test $board_name = SABRESD && test $board_rev = MX6DL; then " \
+-					"setenv fdt_file imx6dl-sabresd.dtb; fi; " \
+-				"if test $fdt_file = undefined; then " \
+-					"echo WARNING: Could not determine dtb to use; fi; " \
+-			"fi;\0" \
++                CONFIG_MFG_ENV_SETTINGS \
++                "fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
++                "fdt_addr=0x18000000\0" \
++                "fdt_high=0xffffffff\0"   \
++		"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
++		"mmcpart=1\0" \
++                "mmcautodetect=yes\0" \
++                "fdtforce=0\0" \
++                "kernel=uImage\0" \
++                "smp=" CONFIG_SYS_NOSMP "\0" \
++                "bootargs_base=console=ttymxc0,115200 \0" \
++                "bootargs_usb=setenv bootargs rootfstype=ext4 root=/dev/sda2 rootwait rw ${bootargs_base} ${smp}\0" \
++                "bootcmd_usb=run bootargs_usb;usb start;" \
++                        "fatload usb 0 ${loadaddr} ${kernel};fatload usb 0 ${fdt_addr} ${fdt_file};bootm ${loadaddr} - ${fdt_addr}\0" \
++		"bootargs_mmc=setenv bootargs rootfstype=ext4 root=/dev/mmcblk1p2 rootwait rw ${bootargs_base} ${smp}\0" \
++                "bootcmd_mmc=run bootargs_mmc;mmc dev 0;" \
++                        "fatload mmc 0 ${loadaddr} ${kernel};fatload mmc 0 ${fdt_addr} ${fdt_file};bootm ${loadaddr} - ${fdt_addr}\0" \
+ 
++#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+ 
+ #define CONFIG_BOOTCOMMAND \
+-	"run findfdt;" \
+-	"mmc dev ${mmcdev};" \
+-	"if mmc rescan; then " \
+-		"if run loadbootscript; then " \
+-		"run bootscript; " \
+-		"else " \
+-			"if run loadimage; then " \
+-				"run mmcboot; " \
+-			"else run netboot; " \
++		"if mmc dev ${mmcdev}; then " \
++			"run bootargs_usb; " \
++			"run bootcmd_usb; "\
+ 			"fi; " \
+-		"fi; " \
+-	"else run netboot; fi"
+-#endif
+-
++		"if mmc dev ${mmcdev}; then " \
++			"run bootargs_mmc; " \
++		        "run bootcmd_mmc; " \
++		"else run bootcmd_mmc; fi"
++				
+ #define CONFIG_ARP_TIMEOUT     200UL
+ 
+ #define CONFIG_CMD_MEMTEST
+@@ -280,69 +116,20 @@
+ #if defined CONFIG_SYS_BOOT_SPINOR
+ #define CONFIG_SYS_USE_SPINOR
+ #define CONFIG_ENV_IS_IN_SPI_FLASH
+-#elif defined CONFIG_SYS_BOOT_EIMNOR
+-#define CONFIG_SYS_USE_EIMNOR
+-#define CONFIG_ENV_IS_IN_FLASH
+-#elif defined CONFIG_SYS_BOOT_NAND
+-#define CONFIG_SYS_USE_NAND
+-#define CONFIG_ENV_IS_IN_NAND
+-#elif defined CONFIG_SYS_BOOT_SATA
+-#define CONFIG_ENV_IS_IN_SATA
+-#define CONFIG_CMD_SATA
+ #else
+ #define CONFIG_ENV_IS_IN_MMC
+ #endif
+ 
+-#ifdef CONFIG_CMD_SATA
+-#define CONFIG_DWC_AHSATA
+-#define CONFIG_SYS_SATA_MAX_DEVICE	1
+-#define CONFIG_DWC_AHSATA_PORT_ID	0
+-#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
+-#define CONFIG_LBA48
+-#define CONFIG_LIBATA
+-#endif
+-
+ #ifdef CONFIG_SYS_USE_SPINOR
+ #define CONFIG_CMD_SF
+ #define CONFIG_SPI_FLASH
+-#define CONFIG_SPI_FLASH_STMICRO
++#define CONFIG_SPI_FLASH_ISSI
+ #define CONFIG_MXC_SPI
+ #define CONFIG_SF_DEFAULT_BUS  0
+ #define CONFIG_SF_DEFAULT_SPEED 20000000
+ #define CONFIG_SF_DEFAULT_MODE (SPI_MODE_0)
+ #endif
+ 
+-#ifdef CONFIG_SYS_USE_EIMNOR
+-#undef CONFIG_SYS_NO_FLASH
+-#define CONFIG_SYS_FLASH_BASE           WEIM_ARB_BASE_ADDR
+-#define CONFIG_SYS_FLASH_SECT_SIZE      (128 * 1024)
+-#define CONFIG_SYS_MAX_FLASH_BANKS 1    /* max number of memory banks */
+-#define CONFIG_SYS_MAX_FLASH_SECT 256   /* max number of sectors on one chip */
+-#define CONFIG_SYS_FLASH_CFI            /* Flash memory is CFI compliant */
+-#define CONFIG_FLASH_CFI_DRIVER         /* Use drivers/cfi_flash.c */
+-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE /* Use buffered writes*/
+-#define CONFIG_SYS_FLASH_EMPTY_INFO
+-#endif
+-
+-#ifdef CONFIG_SYS_USE_NAND
+-/* NAND flash command */
+-#define CONFIG_CMD_NAND
+-#define CONFIG_CMD_NAND_TRIMFFS
+-
+-/* NAND stuff */
+-#define CONFIG_NAND_MXS
+-#define CONFIG_SYS_MAX_NAND_DEVICE     1
+-#define CONFIG_SYS_NAND_BASE           0x40000000
+-#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+-#define CONFIG_SYS_NAND_ONFI_DETECTION
+-
+-/* DMA stuff, needed for GPMI/MXS NAND support */
+-#define CONFIG_APBH_DMA
+-#define CONFIG_APBH_DMA_BURST
+-#define CONFIG_APBH_DMA_BURST8
+-#endif
+-
+-
+ #if defined(CONFIG_ENV_IS_IN_MMC)
+ #define CONFIG_ENV_OFFSET		(12 * 64 * 1024)
+ #elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+@@ -352,61 +139,7 @@
+ #define CONFIG_ENV_SPI_CS              CONFIG_SF_DEFAULT_CS
+ #define CONFIG_ENV_SPI_MODE            CONFIG_SF_DEFAULT_MODE
+ #define CONFIG_ENV_SPI_MAX_HZ          CONFIG_SF_DEFAULT_SPEED
+-#elif defined(CONFIG_ENV_IS_IN_FLASH)
+-#undef CONFIG_ENV_SIZE
+-#define CONFIG_ENV_SIZE                        CONFIG_SYS_FLASH_SECT_SIZE
+-#define CONFIG_ENV_SECT_SIZE           CONFIG_SYS_FLASH_SECT_SIZE
+-#define CONFIG_ENV_OFFSET              (6 * CONFIG_SYS_FLASH_SECT_SIZE)
+-#elif defined(CONFIG_ENV_IS_IN_NAND)
+-#undef CONFIG_ENV_SIZE
+-#define CONFIG_ENV_OFFSET              (60 << 20)
+-#define CONFIG_ENV_SECT_SIZE           (128 << 10)
+-#define CONFIG_ENV_SIZE                        CONFIG_ENV_SECT_SIZE
+-#elif defined(CONFIG_ENV_IS_IN_SATA)
+-#define CONFIG_ENV_OFFSET		(768 * 1024)
+-#define CONFIG_SATA_ENV_DEV		0
+-#define CONFIG_SYS_DCACHE_OFF /* remove when sata driver support cache */
+-#endif
+-
+-/* I2C Configs */
+-#define CONFIG_CMD_I2C
+-#define CONFIG_SYS_I2C
+-#define CONFIG_SYS_I2C_MXC
+-#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
+-#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
+-#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
+-#define CONFIG_SYS_I2C_SPEED		100000
+-
+-/* PMIC */
+-#define CONFIG_POWER
+-#define CONFIG_POWER_I2C
+-#define CONFIG_POWER_PFUZE100
+-#define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
+-
+-/* Framebuffer */
+-#define CONFIG_VIDEO
+-#define CONFIG_VIDEO_IPUV3
+-#define CONFIG_CFB_CONSOLE
+-#define CONFIG_VGA_AS_SINGLE_DEVICE
+-#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+-#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+-#define CONFIG_VIDEO_BMP_RLE8
+-#define CONFIG_SPLASH_SCREEN
+-#define CONFIG_SPLASH_SCREEN_ALIGN
+-#define CONFIG_BMP_16BPP
+-#define CONFIG_VIDEO_LOGO
+-#define CONFIG_VIDEO_BMP_LOGO
+-#ifdef CONFIG_MX6DL
+-#define CONFIG_IPUV3_CLK 198000000
+-#else
+-#define CONFIG_IPUV3_CLK 264000000
+ #endif
+-#define CONFIG_IMX_HDMI
+-#define CONFIG_IMX_VIDEO_SKIP
+-
+-#if defined(CONFIG_ANDROID_SUPPORT)
+-#include "mx6sabreandroid_common.h"
+-#else
+ 
+ #ifndef CONFIG_SPL
+ #define CONFIG_CI_UDC
+@@ -432,6 +165,4 @@
+ #endif
+ #endif
+ 
+-#endif /* CONFIG_ANDROID_SUPPORT */
+-
+ #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */
